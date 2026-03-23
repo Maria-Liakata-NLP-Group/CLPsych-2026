@@ -998,10 +998,3 @@ Task 2   → binary detection:
 Each task has its own ranking metric.
 
 ````
-
-# Evaluation Pipeline
-
-The following diagram summarizes the full evaluation flow across Task 1 and Task 2.
-
-![Evaluation Pipeline Flowchart](assets/evaluation_pipeline.png)
-
