@@ -1,3 +1,14 @@
+Below is a corrected version with the structure kept consistent throughout, including the repo layout and the image reference.
+
+The main fix was closing this block properly:
+
+```text
+A, B-O, B-S, C-O, C-S, D
+```
+
+In your pasted version, that fence was left open, which caused the rest of the README to be treated as code.
+
+````md
 # CLPsych 2026 — Shared Task Evaluation
 
 This repository contains the evaluation logic, metrics, submission format, and scoring pipeline for the **CLPsych 2026 Shared Task**.
@@ -18,6 +29,42 @@ The shared task consists of:
   - [Task 1.1 — ABCD Element & Subelement Classification](#task-11--abcd-element--subelement-classification)
   - [Task 1.2 — Presence Rating](#task-12--presence-rating)
   - [Task 2 — Moments of Change](#task-2--moments-of-change)
+- [2. Task 1.1 Evaluation Logic](#2-task-11-evaluation-logic)
+  - [Overview](#overview)
+  - [Step 1: Post Filtering](#step-1-post-filtering)
+  - [Step 2: Per-Valence Filtering](#step-2-per-valence-filtering)
+  - [Step 3: Data Collection](#step-3-data-collection)
+  - [Step 4: Element Presence Metrics](#step-4-element-presence-metrics)
+  - [Step 5: Subelement Classification Metrics](#step-5-subelement-classification-metrics)
+  - [Task 1.1 Ranking](#task-11-ranking)
+  - [Task 1.1 Pipeline Summary](#task-11-pipeline-summary)
+- [3. Task 1.2 Evaluation Logic](#3-task-12-evaluation-logic)
+  - [Overview](#overview-1)
+  - [Step 1: Post Filtering](#step-1-post-filtering-1)
+  - [Step 2: Per-Valence Filtering](#step-2-per-valence-filtering-1)
+  - [Step 3: Collect Rating Pairs](#step-3-collect-rating-pairs)
+  - [Step 4: Compute Metrics](#step-4-compute-metrics)
+  - [Reporting Structure](#reporting-structure)
+  - [Task 1.2 Ranking](#task-12-ranking)
+  - [Task 1.2 Pipeline Summary](#task-12-pipeline-summary)
+- [4. Task 2 Evaluation Logic](#4-task-2-evaluation-logic)
+  - [Overview](#overview-2)
+  - [Step 1: Post Filtering](#step-1-post-filtering-2)
+  - [Step 2: Label Parsing](#step-2-label-parsing)
+  - [Post-Level Evaluation](#post-level-evaluation)
+  - [Timeline-Level Evaluation](#timeline-level-evaluation)
+  - [Why both post-level and timeline-level?](#why-both-post-level-and-timeline-level)
+  - [Task 2 Ranking](#task-2-ranking)
+  - [Task 2 Pipeline Summary](#task-2-pipeline-summary)
+- [5. Evaluation Metrics Summary](#5-evaluation-metrics-summary)
+- [6. Post Filtering Rules](#6-post-filtering-rules)
+- [7. Environment](#7-environment)
+- [8. Subelement Schema](#8-subelement-schema)
+- [9. Submission Format](#9-submission-format)
+- [10. Submission Validation Script](#10-submission-validation-script)
+- [11. Running the Evaluation Locally](#11-running-the-evaluation-locally)
+- [12. scores.txt Key Names](#12-scorestxt-key-names)
+- [13. Final Summary](#13-final-summary)
 
 ---
 
@@ -73,6 +120,7 @@ Within each self-state, up to **6 ABCD elements** may be present:
 
 ```text
 A, B-O, B-S, C-O, C-S, D
+````
 
 Each present element must receive exactly **one valid subelement** label.
 
@@ -234,7 +282,7 @@ For each element:
 * **Adaptive Micro F1** = pooled across all adaptive elements
 * **Maladaptive Macro F1 / Micro F1** = same
 * **Avg Macro F1 / Avg Micro F1** = mean of adaptive and maladaptive
-* **Overall Macro F1 / Micro F1** = across all 12 element × valence pairs
+* **Overall Macro F1 / Overall Micro F1** = across all 12 element × valence pairs
 
 ### Example
 
@@ -287,8 +335,7 @@ Task 1.2 evaluates the **Presence rating** (1–5 ordinal scale) for each self-s
 
 ## Step 1: Post Filtering
 
-Same as Task 1.1:
-only posts with at least one valid gold `Presence` are evaluated.
+Same as Task 1.1: only posts with at least one valid gold `Presence` are evaluated.
 
 ---
 
@@ -974,7 +1021,7 @@ Each task has its own ranking metric.
 
 ````
 
-One small thing to update in your repo structure:
+And this repo structure is correct for your README reference:
 
 ```text
 CLPsych-2026/
@@ -982,6 +1029,8 @@ CLPsych-2026/
 └── assets/
     └── evaluation_pipeline.png
 ````
+
+with:
 
 ```md
 ![Evaluation Pipeline Flowchart](assets/evaluation_pipeline.png)
