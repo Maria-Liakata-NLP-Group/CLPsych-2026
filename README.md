@@ -1,13 +1,3 @@
-Below is a corrected version with the structure kept consistent throughout, including the repo layout and the image reference.
-
-The main fix was closing this block properly:
-
-```text
-A, B-O, B-S, C-O, C-S, D
-```
-
-In your pasted version, that fence was left open, which caused the rest of the README to be treated as code.
-
 ````md
 # CLPsych 2026 — Shared Task Evaluation
 
@@ -20,7 +10,7 @@ The shared task consists of:
 - **Task 2** — Moments of Change (Switch & Escalation)
 
 ---
-
+````
 # Table of Contents
 
 - [Evaluation Pipeline](#evaluation-pipeline)
