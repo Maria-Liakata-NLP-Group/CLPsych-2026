@@ -1,4 +1,3 @@
-Absolutely — here is the same README with a **Table of Contents added**, while keeping the rest unchanged in substance and flow.
 
 ````md
 # CLPsych 2026 — Shared Task Evaluation
