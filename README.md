@@ -1,4 +1,3 @@
-````md
 # CLPsych 2026 — Shared Task Evaluation
 
 This repository contains the evaluation logic, metrics, submission format, and scoring pipeline for the **CLPsych 2026 Shared Task**.
@@ -8,7 +7,6 @@ The shared task consists of:
 - **Task 1.1** — ABCD Element & Subelement Classification
 - **Task 1.2** — Presence Rating
 - **Task 2** — Moments of Change (Switch & Escalation)
-````
 # Table of Contents
 
 - [Evaluation Pipeline](#evaluation-pipeline)
