@@ -4,103 +4,102 @@ This repository contains the evaluation logic, metrics, submission format, and s
 
 The shared task consists of:
 
-- **Task 1.1** — ABCD Element & Subelement Classification
-- **Task 1.2** — Presence Rating
-- **Task 2** — Moments of Change (Switch & Escalation)
+* **Task 1.1** — ABCD Element & Subelement Classification
+* **Task 1.2** — Presence Rating
+* **Task 2** — Moments of Change (Switch & Escalation)
+
 # Table of Contents
 
-- [Evaluation Pipeline](#evaluation-pipeline)
-- [Concept Overview](#concept-overview)
-- [1. Evaluation Overview](#1-evaluation-overview)
-  - [Task 1.1 — ABCD Element & Subelement Classification](#task-11--abcd-element--subelement-classification)
-  - [Task 1.2 — Presence Rating](#task-12--presence-rating)
-  - [Task 2 — Moments of Change](#task-2--moments-of-change)
-- [2. Task 1.1 Evaluation Logic](#2-task-11-evaluation-logic)
-  - [Overview](#overview)
-  - [Step 1: Post Filtering](#step-1-post-filtering)
-  - [Step 2: Per-Valence Filtering](#step-2-per-valence-filtering)
-  - [Step 3: Data Collection](#step-3-data-collection)
-  - [Step 4: Element Presence Metrics](#step-4-element-presence-metrics)
-  - [Step 5: Subelement Classification Metrics](#step-5-subelement-classification-metrics)
-  - [Task 1.1 Ranking](#task-11-ranking)
-  - [Task 1.1 Pipeline Summary](#task-11-pipeline-summary)
-- [3. Task 1.2 Evaluation Logic](#3-task-12-evaluation-logic)
-  - [Overview](#overview-1)
-  - [Step 1: Post Filtering](#step-1-post-filtering-1)
-  - [Step 2: Per-Valence Filtering](#step-2-per-valence-filtering-1)
-  - [Step 3: Collect Rating Pairs](#step-3-collect-rating-pairs)
-  - [Step 4: Compute Metrics](#step-4-compute-metrics)
-  - [Reporting Structure](#reporting-structure)
-  - [Task 1.2 Ranking](#task-12-ranking)
-  - [Task 1.2 Pipeline Summary](#task-12-pipeline-summary)
-- [4. Task 2 Evaluation Logic](#4-task-2-evaluation-logic)
-  - [Overview](#overview-2)
-  - [Step 1: Post Filtering](#step-1-post-filtering-2)
-  - [Step 2: Label Parsing](#step-2-label-parsing)
-  - [Post-Level Evaluation](#post-level-evaluation)
-  - [Timeline-Level Evaluation](#timeline-level-evaluation)
-  - [Why both post-level and timeline-level?](#why-both-post-level-and-timeline-level)
-  - [Task 2 Ranking](#task-2-ranking)
-  - [Task 2 Pipeline Summary](#task-2-pipeline-summary)
-- [5. Evaluation Metrics Summary](#5-evaluation-metrics-summary)
-- [6. Post Filtering Rules](#6-post-filtering-rules)
-- [7. Environment](#7-environment)
-- [8. Subelement Schema](#8-subelement-schema)
-- [9. Submission Format](#9-submission-format)
-- [10. Submission Validation Script](#10-submission-validation-script)
-- [11. Running the Evaluation Locally](#11-running-the-evaluation-locally)
-- [12. scores.txt Key Names](#12-scorestxt-key-names)
-- [13. Final Summary](#13-final-summary)
+* [Evaluation Pipeline](#evaluation-pipeline)
+* [Concept Overview](#concept-overview)
+* [1. Evaluation Overview](#1-evaluation-overview)
 
+  * [Task 1.1 — ABCD Element & Subelement Classification](#task-11--abcd-element--subelement-classification)
+  * [Task 1.2 — Presence Rating](#task-12--presence-rating)
+  * [Task 2 — Moments of Change](#task-2--moments-of-change)
+* [2. Task 1.1 Evaluation Logic](#2-task-11-evaluation-logic)
 
+  * [Overview](#overview)
+  * [Step 1: Post Filtering](#step-1-post-filtering)
+  * [Step 2: Per-Valence Filtering](#step-2-per-valence-filtering)
+  * [Step 3: Data Collection](#step-3-data-collection)
+  * [Step 4: Element Presence Metrics](#step-4-element-presence-metrics)
+  * [Step 5: Subelement Classification Metrics](#step-5-subelement-classification-metrics)
+  * [Task 1.1 Ranking](#task-11-ranking)
+  * [Task 1.1 Pipeline Summary](#task-11-pipeline-summary)
+* [3. Task 1.2 Evaluation Logic](#3-task-12-evaluation-logic)
+
+  * [Overview](#overview-1)
+  * [Step 1: Post Filtering](#step-1-post-filtering-1)
+  * [Step 2: Per-Valence Filtering](#step-2-per-valence-filtering-1)
+  * [Step 3: Collect Rating Pairs](#step-3-collect-rating-pairs)
+  * [Step 4: Compute Metrics](#step-4-compute-metrics)
+  * [Reporting Structure](#reporting-structure)
+  * [Task 1.2 Ranking](#task-12-ranking)
+  * [Task 1.2 Pipeline Summary](#task-12-pipeline-summary)
+* [4. Task 2 Evaluation Logic](#4-task-2-evaluation-logic)
+
+  * [Overview](#overview-2)
+  * [Step 1: Post Filtering](#step-1-post-filtering-2)
+  * [Step 2: Label Parsing](#step-2-label-parsing)
+  * [Post-Level Evaluation](#post-level-evaluation)
+  * [Timeline-Level Evaluation](#timeline-level-evaluation)
+  * [Why both post-level and timeline-level?](#why-both-post-level-and-timeline-level)
+  * [Task 2 Ranking](#task-2-ranking)
+  * [Task 2 Pipeline Summary](#task-2-pipeline-summary)
+* [5. Evaluation Metrics Summary](#5-evaluation-metrics-summary)
+* [6. Post Filtering Rules](#6-post-filtering-rules)
+* [7. Environment](#7-environment)
+* [8. Subelement Schema](#8-subelement-schema)
+* [9. Submission Format](#9-submission-format)
+* [10. Submission Validation Script](#10-submission-validation-script)
+* [11. Running the Evaluation Locally](#11-running-the-evaluation-locally)
+* [12. scores.txt Key Names](#12-scorestxt-key-names)
+* [13. Final Summary](#13-final-summary)
 
 ## What the flowchart shows
 
-- **Task 1** starts from all posts, then filters to only posts with gold evidence
-- It then evaluates each valence independently:
-  - **Element presence**
-  - **Subelement classification**
-  - **Presence rating**
-- **Task 2** uses **all posts**
-  - Converts Switch/Escalation labels into binary form
-  - Computes both **post-level** and **timeline-level** metrics
-- Final ranking metrics are derived separately for:
-  - **Task 1.1**
-  - **Task 1.2**
-  - **Task 2**
+* **Task 1** starts from all posts, then filters to only posts with gold evidence
+* It then evaluates each valence independently:
 
+  * **Element presence**
+  * **Subelement classification**
+  * **Presence rating**
+* **Task 2** uses **all posts**
 
+  * Converts Switch/Escalation labels into binary form
+  * Computes both **post-level** and **timeline-level** metrics
+* Final ranking metrics are derived separately for:
+
+  * **Task 1.1**
+  * **Task 1.2**
+  * **Task 2**
 
 # Concept Overview
 
 The diagram also captures the conceptual relationship between the tasks:
 
-- **Task 1** focuses on:
-  - Presence filtering
-  - Element-level binary prediction
-  - Subelement multi-class prediction
-  - Presence rating
-- **Task 2** focuses on:
-  - Switch detection
-  - Escalation detection
-  - Evaluation both at post level and timeline level
+* **Task 1** focuses on:
 
+  * Presence filtering
+  * Element-level binary prediction
+  * Subelement multi-class prediction
+  * Presence rating
+* **Task 2** focuses on:
 
+  * Switch detection
+  * Escalation detection
+  * Evaluation both at post level and timeline level
 
 # 1. Evaluation Overview
 
 ## Task 1.1 — ABCD Element & Subelement Classification
 
-Each post may contain:
-
-- an **adaptive self-state**
-- a **maladaptive self-state**
-
-Within each self-state, up to **6 ABCD elements** may be present:
+Each post may contain an adaptive and/or maladaptive self-state. Within each self-state, up to **6 ABCD elements** may be present:
 
 ```text
 A, B-O, B-S, C-O, C-S, D
-````
+```
 
 Each present element must receive exactly **one valid subelement** label.
 
@@ -109,13 +108,9 @@ Each present element must receive exactly **one valid subelement** label.
 1. **Element presence** — binary classification for each element
 2. **Subelement classification** — multi-class classification for the selected subelement when the element is present
 
-
-
 ## Task 1.2 — Presence Rating
 
 Each self-state also has a **Presence rating (1–5)** measuring psychological centrality.
-
-
 
 ## Task 2 — Moments of Change
 
@@ -131,8 +126,6 @@ A post may have:
 * only Escalation
 * both
 
-
-
 # 2. Task 1.1 Evaluation Logic
 
 ## Overview
@@ -142,8 +135,6 @@ Task 1.1 evaluates two levels:
 1. **Element presence** (binary): is element X present in this valence?
 2. **Subelement classification** (multi-class): if present, which subelement was selected?
 
-
-
 ## Step 1: Post Filtering
 
 Only posts with at least one valid `Presence` value in gold are evaluated. Posts with empty evidence are skipped entirely.
@@ -152,8 +143,6 @@ Only posts with at least one valid `Presence` value in gold are evaluated. Posts
 375 total posts → ~225 posts with evidence → evaluated
 ~150 posts with no evidence → skipped
 ```
-
-
 
 ## Step 2: Per-Valence Filtering
 
@@ -167,8 +156,6 @@ The 6 maladaptive element slots are **not evaluated at all** for that post:
 * no FP
 * no FN
 * no TN
-
-
 
 ## Step 3: Data Collection
 
@@ -203,8 +190,6 @@ Gold adaptive:  [A:3, BO:1, BS:0, CO:0, CS:0, D:2]
 Pred adaptive:  [A:5, BO:0, BS:1, CO:0, CS:0, D:1]
 ```
 
-
-
 ## Step 4: Element Presence Metrics
 
 After processing all posts, each element × valence accumulates binary gold/prediction lists.
@@ -224,8 +209,6 @@ Metrics computed:
 * **Avg Macro F1 / Avg Micro F1**
 * **Overall Macro F1 / Overall Micro F1**
 * **Support** = number of gold positives for each element × valence pair
-
-
 
 ## Step 5: Subelement Classification Metrics
 
@@ -278,8 +261,6 @@ For `adaptive-state:A` across 5 posts:
 
 **Note:** For elements with only one subelement (`B-S`, `C-S`), subelement F1 is equivalent to element presence F1.
 
-
-
 ## Task 1.1 Ranking
 
 Ranking uses **subelement classification only**.
@@ -292,8 +273,6 @@ Ranking uses **subelement classification only**.
 Task 1.1 Ranking = Subelement Classification Avg Macro F1
 ```
 
-
-
 ## Task 1.1 Pipeline Summary
 
 ```text
@@ -303,27 +282,19 @@ Post filtering:          only posts with gold Presence
        └─ Subelement classification: multi-class per element → F1 per element, per valence, overall
 ```
 
-
-
 # 3. Task 1.2 Evaluation Logic
 
 ## Overview
 
 Task 1.2 evaluates the **Presence rating** (1–5 ordinal scale) for each self-state.
 
----
-
 ## Step 1: Post Filtering
 
 Same as Task 1.1: only posts with at least one valid gold `Presence` are evaluated.
 
-
-
 ## Step 2: Per-Valence Filtering
 
 A Presence score is evaluated for a valence only if the gold data has a valid integer `Presence` from 1 to 5.
-
-
 
 ## Step 3: Collect Rating Pairs
 
@@ -346,8 +317,6 @@ If gold has a Presence value but the prediction omits the valence or omits `Pres
 ```
 
 This penalizes missing predictions instead of skipping them.
-
-
 
 ## Step 4: Compute Metrics
 
@@ -386,19 +355,15 @@ QWK and Spearman are computed on the full vectors.
 
 The `combined` split concatenates adaptive and maladaptive rating pairs into one pool and computes all metrics on the combined vectors.
 
-
-
 ## Reporting Structure
 
 ```json
 {
-  "adaptive-state":    { "mae": 0.0, "rmse": 0.0, "qwk": 0.0, "spearman": 0.0, "n": 0 },
-  "maladaptive-state": { "mae": 0.0, "rmse": 0.0, "qwk": 0.0, "spearman": 0.0, "n": 0 },
-  "combined":          { "mae": 0.0, "rmse": 0.0, "qwk": 0.0, "spearman": 0.0, "n": 0 }
+  "adaptive-state":    { "mae", "rmse", "qwk", "spearman", "n" },
+  "maladaptive-state": { "mae", "rmse", "qwk", "spearman", "n" },
+  "combined":          { "mae", "rmse", "qwk", "spearman", "n" }
 }
 ```
-
-
 
 ## Task 1.2 Ranking
 
@@ -408,8 +373,6 @@ Task 1.2 Ranking = mean(Adaptive RMSE, Maladaptive RMSE)
 
 Lower is better.
 
-
-
 ## Task 1.2 Pipeline Summary
 
 ```text
@@ -418,8 +381,6 @@ Post filtering:          only posts with gold Presence
        └─ Pair collection: gold Presence vs pred Presence (default 1 if missing)
             └─ Metrics: MAE, RMSE, QWK, Spearman per valence and combined
 ```
-
-
 
 # 4. Task 2 Evaluation Logic
 
@@ -434,15 +395,11 @@ The two labels are independent:
 
 A post may have both.
 
-
-
 ## Step 1: Post Filtering
 
 All posts are evaluated.
 
 Unlike Task 1, there is **no evidence-based filtering**.
-
-
 
 ## Step 2: Label Parsing
 
@@ -456,8 +413,6 @@ Each label is converted to binary:
 | `"0"`     | 0      |
 
 Switch and Escalation are evaluated independently.
-
-
 
 ## Post-Level Evaluation
 
@@ -496,8 +451,6 @@ For each label:
 | `support_positive` | number of gold-positive posts                    |
 | `support_total`    | total number of posts                            |
 | `macro_f1`         | mean of Switch F1 and Escalation F1              |
-
-
 
 ## Timeline-Level Evaluation
 
@@ -573,8 +526,6 @@ This avoids penalizing correct prediction of complete absence.
 | `num_timelines` | number of timelines                                |
 | `macro_f1`      | mean of timeline-level Switch F1 and Escalation F1 |
 
-
-
 ## Why both post-level and timeline-level?
 
 * **Post-level** rewards overall accuracy across the full dataset
@@ -582,15 +533,11 @@ This avoids penalizing correct prediction of complete absence.
 
 A model that performs well only on large timelines may still score poorly on timeline-level evaluation.
 
-
-
 ## Task 2 Ranking
 
 ```text
 Task 2 Ranking = mean(Post-level Macro F1, Timeline-level Macro F1)
 ```
-
-
 
 ## Task 2 Pipeline Summary
 
@@ -599,7 +546,6 @@ All posts (no filtering)
   ├─ Post-level:     pool all posts → P/R/F1 per label → macro F1
   └─ Timeline-level: group by timeline_id → P/R/F1 per timeline → macro-average → macro F1
 ```
-
 
 # 5. Evaluation Metrics Summary
 
@@ -613,8 +559,6 @@ Reported:
 * Per-valence Macro F1 and Micro F1
 * Avg Macro F1 / Avg Micro F1
 * Overall Macro F1 / Overall Micro F1
-
-
 
 ## Task 1.1 — Subelement Classification
 
@@ -639,7 +583,6 @@ Reported:
 Ranking = Subelement Classification Avg Macro F1
 ```
 
-
 ## Task 1.2 — Presence Rating
 
 Reported separately for:
@@ -661,8 +604,6 @@ Ranking = mean(Adaptive RMSE, Maladaptive RMSE)
 
 Lower is better.
 
-
-
 ## Task 2 — Moments of Change
 
 Reported for both post-level and timeline-level evaluation:
@@ -675,8 +616,6 @@ Reported for both post-level and timeline-level evaluation:
 ```text
 Ranking = mean(Post-level Macro F1, Timeline-level Macro F1)
 ```
-
-
 
 # 6. Post Filtering Rules
 
@@ -699,8 +638,6 @@ All posts are evaluated.
 
 Switch and Escalation labels are always present.
 
-
-
 # 7. Environment
 
 | Component    | Value                         |
@@ -712,8 +649,6 @@ Switch and Escalation labels are always present.
 | scipy        | 1.3.1                         |
 
 All dependencies are pre-installed. No additional `pip install` is required.
-
-
 
 # 8. Subelement Schema
 
@@ -739,8 +674,6 @@ All dependencies are pre-installed. No additional `pip install` is required.
 | C-S     | 1 | 1=Self-criticism                                                                                                                                                              |
 | D       | 3 | 1=Relatedness unmet, 2=Autonomy unmet, 3=Competence unmet                                                                                                                     |
 
-
-
 # 9. Submission Format
 
 Participants submit **separate JSON files** for Task 1 and Task 2.
@@ -755,7 +688,9 @@ Do **not** include post text fields such as:
 
 These must be removed before submission.
 
+## Note
 
+Participants may submit predictions for one or both tasks. If a prediction file for a task is not provided, that task will be skipped and only the other task will be scored.
 
 ## Task 1 Submission (`task1_pred.json`)
 
@@ -809,9 +744,7 @@ A JSON array of per-post predictions.
 
 * Elements are: `A`, `B-O`, `B-S`, `C-O`, `C-S`, `D`
 * Exactly one subelement per element per valence
-* Only posts with gold evidence are evaluated, but extra predicted entries may be ignored depending on validation/coverage mode
-
-
+* Only include entries for posts that have annotated evidence in the gold data. Posts without gold evidence are ignored during evaluation.
 
 ## Task 2 Submission (`task2_pred.json`)
 
@@ -847,8 +780,6 @@ A JSON array of per-post predictions.
 
 * Must include an entry for **every** post in the test data
 * Switch and Escalation are independent
-
-
 
 # 10. Submission Validation Script
 
@@ -888,8 +819,6 @@ python validate_submission.py --task1 task1_pred.json --task2 task2_pred.json
 python validate_submission.py --task1 task1_pred.json --task2 task2_pred.json --test-dir <test_data_dir>
 ```
 
-
-
 # 11. Running the Evaluation Locally
 
 ## Task 1 only
@@ -925,8 +854,6 @@ python run_evaluation.py --gold-dir <gold_dir> \
 `<gold_dir>` should contain gold-standard timeline JSON files, one `*.json` per timeline.
 
 If a prediction file is missing, that task is skipped gracefully.
-
-
 
 # 12. scores.txt Key Names
 
@@ -977,8 +904,6 @@ key: value
 
 See `SCORES_KEY.md` for the complete metric key reference.
 
-
-
 # 13. Final Summary
 
 ```text
@@ -996,5 +921,3 @@ Task 2   → binary detection:
 ```
 
 Each task has its own ranking metric.
-
-````
