@@ -8,8 +8,6 @@ The shared task consists of:
 - **Task 1.1** — ABCD Element & Subelement Classification
 - **Task 1.2** — Presence Rating
 - **Task 2** — Moments of Change (Switch & Escalation)
-
----
 ````
 # Table of Contents
 
