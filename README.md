@@ -1,6 +1,3 @@
-Here is a **clean, copy-paste ready GitHub README.md** (minimal, structured, no redundancy, polished for repo use):
-
----
 
 ```markdown
 # CLPsych-2026
