@@ -1,12 +1,52 @@
+````md
 # CLPsych 2026 — Shared Task Evaluation
 
-This repository contains the evaluation logic, metrics, and submission format for the **CLPsych 2026 Shared Task**.
+This repository contains the evaluation logic, metrics, submission format, and scoring pipeline for the **CLPsych 2026 Shared Task**.
 
-The task consists of:
+The shared task consists of:
 
-* **Task 1.1** — ABCD Element & Subelement Classification
-* **Task 1.2** — Presence Rating (ordinal regression)
-* **Task 2** — Moments of Change (Switch & Escalation detection)
+- **Task 1.1** — ABCD Element & Subelement Classification
+- **Task 1.2** — Presence Rating
+- **Task 2** — Moments of Change (Switch & Escalation)
+
+---
+
+# Evaluation Pipeline
+
+The following diagram summarizes the full evaluation flow across Task 1 and Task 2.
+
+![Evaluation Pipeline Flowchart](assets/evaluation_pipeline.png)
+
+## What the flowchart shows
+
+- **Task 1** starts from all posts, then filters to only posts with gold evidence
+- It then evaluates each valence independently:
+  - **Element presence**
+  - **Subelement classification**
+  - **Presence rating**
+- **Task 2** uses **all posts**
+  - Converts Switch/Escalation labels into binary form
+  - Computes both **post-level** and **timeline-level** metrics
+- Final ranking metrics are derived separately for:
+  - **Task 1.1**
+  - **Task 1.2**
+  - **Task 2**
+
+---
+
+# Concept Overview
+
+The diagram also captures the conceptual relationship between the tasks:
+
+- **Task 1** focuses on:
+  - Presence filtering
+  - Element-level binary prediction
+  - Subelement multi-class prediction
+  - Presence rating
+- **Task 2** focuses on:
+  - Switch detection
+  - Escalation detection
+  - Evaluation both at post level and timeline level
 
 ---
 
@@ -16,448 +56,925 @@ The task consists of:
 
 Each post may contain:
 
-* **Adaptive self-state**
-* **Maladaptive self-state**
+- an **adaptive self-state**
+- a **maladaptive self-state**
 
-Within each self-state, up to **6 elements** may be present:
+Within each self-state, up to **6 ABCD elements** may be present:
 
-```
+```text
 A, B-O, B-S, C-O, C-S, D
-```
+````
 
-Each element:
+Each present element must receive exactly **one valid subelement** label.
 
-* Has **binary presence** (present / absent)
-* If present → exactly **one subelement** must be predicted
+### Two evaluation layers
+
+1. **Element presence** — binary classification for each element
+2. **Subelement classification** — multi-class classification for the selected subelement when the element is present
 
 ---
 
 ## Task 1.2 — Presence Rating
 
-Each self-state has a **Presence score (1–5)** indicating psychological centrality.
+Each self-state also has a **Presence rating (1–5)** measuring psychological centrality.
 
 ---
 
 ## Task 2 — Moments of Change
 
-Each post has two independent binary labels:
+Each post is evaluated for two independent binary labels:
 
-* **Switch** (`S` or `0`)
-* **Escalation** (`E` or `0`)
+* **Switch**
+* **Escalation**
+
+A post may have:
+
+* neither
+* only Switch
+* only Escalation
+* both
 
 ---
 
-# 2. Task 1.1 — Evaluation Logic
+# 2. Task 1.1 Evaluation Logic
 
 ## Overview
 
-Two levels are evaluated:
+Task 1.1 evaluates two levels:
 
-1. **Element presence** (binary)
-2. **Subelement classification** (multi-class)
+1. **Element presence** (binary): is element X present in this valence?
+2. **Subelement classification** (multi-class): if present, which subelement was selected?
 
 ---
 
 ## Step 1: Post Filtering
 
-Only posts with at least one valid `Presence` in gold are evaluated.
+Only posts with at least one valid `Presence` value in gold are evaluated. Posts with empty evidence are skipped entirely.
 
-```
-375 total posts
-→ ~225 with evidence → evaluated
-→ ~150 without evidence → skipped
+```text
+375 total posts → ~225 posts with evidence → evaluated
+~150 posts with no evidence → skipped
 ```
 
 ---
 
 ## Step 2: Per-Valence Filtering
 
-Each valence is evaluated independently.
+Within an evaluated post, each valence is checked independently.
 
-Example:
+If a post has `adaptive-state.Presence = 3` but no `maladaptive-state` evidence, then only the adaptive side is evaluated.
 
-* Adaptive has Presence → evaluated
-* Maladaptive missing → **not evaluated at all**
+The 6 maladaptive element slots are **not evaluated at all** for that post:
+
+* no TP
+* no FP
+* no FN
+* no TN
 
 ---
 
 ## Step 3: Data Collection
 
-### Element Presence (binary)
+For each valence that passed Step 2, all 6 elements are compared between gold and prediction.
 
-| Element | Gold    | Pred    | Result |
-| ------- | ------- | ------- | ------ |
-| A       | present | present | TP     |
-| B-O     | present | absent  | FN     |
-| B-S     | absent  | present | FP     |
-| C-O     | absent  | absent  | TN     |
-| C-S     | absent  | absent  | TN     |
-| D       | present | present | TP     |
+### Element presence — binary
 
----
+| Element | Gold            | Pred            | Binary (g, p) | Result |
+| ------- | --------------- | --------------- | ------------- | ------ |
+| A       | present (sub=3) | present (sub=5) | (1, 1)        | TP     |
+| B-O     | present (sub=1) | absent          | (1, 0)        | FN     |
+| B-S     | absent          | present (sub=1) | (0, 1)        | FP     |
+| C-O     | absent          | absent          | (0, 0)        | TN     |
+| C-S     | absent          | absent          | (0, 0)        | TN     |
+| D       | present (sub=2) | present (sub=1) | (1, 1)        | TP     |
 
-### Subelement Classification (multi-class)
+### Subelement classification — multi-class label
 
+| Element | Gold label | Pred label |
+| ------- | ---------- | ---------- |
+| A       | 3          | 5          |
+| B-O     | 1          | 0          |
+| B-S     | 0          | 1          |
+| C-O     | 0          | 0          |
+| C-S     | 0          | 0          |
+| D       | 2          | 1          |
+
+This gives the per-post vector:
+
+```text
+Gold adaptive:  [A:3, BO:1, BS:0, CO:0, CS:0, D:2]
+Pred adaptive:  [A:5, BO:0, BS:1, CO:0, CS:0, D:1]
 ```
-Gold: [A:3, BO:1, BS:0, CO:0, CS:0, D:2]
-Pred: [A:5, BO:0, BS:1, CO:0, CS:0, D:1]
-```
-
-* `0 = absent`
-* `1..K = subelement`
 
 ---
 
 ## Step 4: Element Presence Metrics
 
-Computed for **12 element × valence pairs**:
+After processing all posts, each element × valence accumulates binary gold/prediction lists.
 
-* Precision, Recall, F1 (per element)
-* Macro / Micro F1 (per valence)
-* Avg Macro / Micro F1
-* Overall Macro / Micro F1
+Example:
+
+```text
+adaptive-state:A
+gold: [1,0,1,1,0,0,1,...]
+pred: [1,0,0,1,1,0,1,...]
+```
+
+Metrics computed:
+
+* **Per-element Precision, Recall, F1**
+* **Per-valence Macro F1 and Micro F1**
+* **Avg Macro F1 / Avg Micro F1**
+* **Overall Macro F1 / Overall Micro F1**
+* **Support** = number of gold positives for each element × valence pair
 
 ---
 
 ## Step 5: Subelement Classification Metrics
 
-Each element is treated as:
+Each element is treated as a multi-class problem over:
 
+```text
+{0 = absent, 1, 2, ..., K}
 ```
-Multi-class classification over {1..K}
-(Class 0 excluded from scoring)
-```
 
-### Important Rules
+where `K` is the number of valid subelements for that element.
 
-* Wrong subelement → FP + FN
-* Missing element → FN
-* False element → FP
-* Both absent → ignored
+### Important scoring rule
 
----
+F1 is computed **only over positive classes**.
+Class `0` (absent) is excluded because absence is already handled in element presence evaluation.
 
-### Per-element Metrics
+This means:
 
-* **Macro F1** — average over subelement classes
-* **Micro F1** — pooled across classes
+* wrong subelement (`gold=3, pred=5`) → FN for class 3, FP for class 5
+* missing element (`gold=3, pred=0`) → FN for class 3
+* false element (`gold=0, pred=5`) → FP for class 5
+* both absent (`gold=0, pred=0`) → ignored
 
----
+### Per-element metrics
+
+For each element:
+
+* **Macro F1** = mean F1 across valid subelement classes
+* **Micro F1** = pooled TP/FP/FN across valid subelement classes
 
 ### Aggregation
 
-* Adaptive Macro F1 (6 elements)
-* Maladaptive Macro F1 (6 elements)
-* Avg Macro F1 = mean(adaptive, maladaptive)
+* **Adaptive Macro F1** = mean of 6 adaptive element macro F1 scores
+* **Adaptive Micro F1** = pooled across all adaptive elements
+* **Maladaptive Macro F1 / Micro F1** = same
+* **Avg Macro F1 / Avg Micro F1** = mean of adaptive and maladaptive
+* **Overall Macro F1 / Micro F1** = across all 12 element × valence pairs
+
+### Example
+
+For `adaptive-state:A` across 5 posts:
+
+| Post | Gold | Pred | Effect                         |
+| ---- | ---- | ---- | ------------------------------ |
+| 1    | 3    | 3    | TP for class 3                 |
+| 2    | 5    | 3    | FN for class 5, FP for class 3 |
+| 3    | 0    | 0    | ignored                        |
+| 4    | 3    | 0    | FN for class 3                 |
+| 5    | 0    | 2    | FP for class 2                 |
+
+**Note:** For elements with only one subelement (`B-S`, `C-S`), subelement F1 is equivalent to element presence F1.
 
 ---
 
-## 🔑 Task 1.1 Ranking
+## Task 1.1 Ranking
 
-```
-Ranking = Subelement Classification Avg Macro F1
-```
+Ranking uses **subelement classification only**.
 
----
+1. Compute **Macro F1 per element** for all 12 element × valence pairs
+2. Macro-average over the 6 elements within each valence
+3. Average adaptive and maladaptive macro F1
 
-## Pipeline Summary
-
-```
-Post filtering
-  └─ Valence filtering
-       ├─ Element presence → binary metrics
-       └─ Subelement classification → multi-class F1
+```text
+Task 1.1 Ranking = Subelement Classification Avg Macro F1
 ```
 
 ---
 
-# 3. Task 1.2 — Presence Rating
+## Task 1.1 Pipeline Summary
+
+```text
+Post filtering:          only posts with gold Presence
+  └─ Valence filtering:  only valences with gold Presence in that post
+       ├─ Element presence: binary per element → P/R/F1 per element, per valence, overall
+       └─ Subelement classification: multi-class per element → F1 per element, per valence, overall
+```
+
+---
+
+# 3. Task 1.2 Evaluation Logic
 
 ## Overview
 
-Evaluates **ordinal prediction (1–5)** per self-state.
+Task 1.2 evaluates the **Presence rating** (1–5 ordinal scale) for each self-state.
 
 ---
 
 ## Step 1: Post Filtering
 
-Same as Task 1.1.
+Same as Task 1.1:
+only posts with at least one valid gold `Presence` are evaluated.
 
 ---
 
 ## Step 2: Per-Valence Filtering
 
-Only valences with gold Presence are evaluated.
+A Presence score is evaluated for a valence only if the gold data has a valid integer `Presence` from 1 to 5.
 
 ---
 
-## Step 3: Pair Collection
+## Step 3: Collect Rating Pairs
 
-| Post | Valence     | Gold | Pred |
-| ---- | ----------- | ---- | ---- |
-| 1    | adaptive    | 3    | 3    |
-| 1    | maladaptive | 4    | 2    |
-| 2    | maladaptive | 2    | 3    |
+For each evaluated `(post, valence)` pair:
 
-### Default Rule
+| Post | Valence           | Gold Presence | Pred Presence | Pair    |
+| ---- | ----------------- | ------------- | ------------- | ------- |
+| 1    | adaptive-state    | 3             | 3             | (3,3)   |
+| 1    | maladaptive-state | 4             | 2             | (4,2)   |
+| 2    | adaptive-state    | —             | —             | skipped |
+| 2    | maladaptive-state | 2             | 3             | (2,3)   |
+| 3    | adaptive-state    | 1             | —             | (1,1)   |
 
-If prediction is missing:
+### Default behavior
 
+If gold has a Presence value but the prediction omits the valence or omits `Presence`, the predicted Presence defaults to:
+
+```text
+1
 ```
-Pred Presence = 1
+
+This penalizes missing predictions instead of skipping them.
+
+---
+
+## Step 4: Compute Metrics
+
+Metrics are computed separately for:
+
+* adaptive-state
+* maladaptive-state
+* combined
+
+| Metric       | Description                      |
+| ------------ | -------------------------------- |
+| **MAE**      | Mean Absolute Error              |
+| **RMSE**     | Root Mean Squared Error          |
+| **QWK**      | Quadratic Weighted Kappa         |
+| **Spearman** | Spearman rank correlation        |
+| **n**        | Number of evaluated rating pairs |
+
+### Example
+
+Given 5 adaptive pairs:
+
+| Post | Gold | Pred | |Error| | Error² |
+| ---- | ---- | ---- | ------- | ------ |
+| 1    | 3    | 3    | 0       | 0      |
+| 2    | 4    | 2    | 2       | 4      |
+| 3    | 1    | 1    | 0       | 0      |
+| 4    | 5    | 4    | 1       | 1      |
+| 5    | 2    | 3    | 1       | 1      |
+
+* MAE = (0 + 2 + 0 + 1 + 1) / 5 = 0.800
+* RMSE = sqrt((0 + 4 + 0 + 1 + 1) / 5) = sqrt(1.2) = 1.095
+
+QWK and Spearman are computed on the full vectors.
+
+### Combined metrics
+
+The `combined` split concatenates adaptive and maladaptive rating pairs into one pool and computes all metrics on the combined vectors.
+
+---
+
+## Reporting Structure
+
+```json
+{
+  "adaptive-state":    { "mae": 0.0, "rmse": 0.0, "qwk": 0.0, "spearman": 0.0, "n": 0 },
+  "maladaptive-state": { "mae": 0.0, "rmse": 0.0, "qwk": 0.0, "spearman": 0.0, "n": 0 },
+  "combined":          { "mae": 0.0, "rmse": 0.0, "qwk": 0.0, "spearman": 0.0, "n": 0 }
+}
 ```
 
 ---
 
-## Step 4: Metrics
+## Task 1.2 Ranking
 
-| Metric   | Description              |
-| -------- | ------------------------ |
-| MAE      | Mean Absolute Error      |
-| RMSE     | Root Mean Squared Error  |
-| QWK      | Quadratic Weighted Kappa |
-| Spearman | Rank correlation         |
+```text
+Task 1.2 Ranking = mean(Adaptive RMSE, Maladaptive RMSE)
+```
 
-Computed for:
-
-* Adaptive
-* Maladaptive
-* Combined
+Lower is better.
 
 ---
 
-## 🔑 Task 1.2 Ranking
+## Task 1.2 Pipeline Summary
 
-```
-Ranking = mean(Adaptive RMSE, Maladaptive RMSE)
-(lower is better)
+```text
+Post filtering:          only posts with gold Presence
+  └─ Valence filtering:  only valences with valid gold Presence (int 1-5)
+       └─ Pair collection: gold Presence vs pred Presence (default 1 if missing)
+            └─ Metrics: MAE, RMSE, QWK, Spearman per valence and combined
 ```
 
 ---
 
-## Pipeline Summary
-
-```
-Post filtering
-  └─ Valence filtering
-       └─ Pair collection
-            └─ Metrics (MAE, RMSE, QWK, Spearman)
-```
-
----
-
-# 4. Task 2 — Moments of Change
+# 4. Task 2 Evaluation Logic
 
 ## Overview
 
-Binary classification per post:
+Task 2 evaluates **Moments of Change** detection.
 
-* Switch
-* Escalation
+The two labels are independent:
+
+* **Switch** (`"S"` or `"0"`)
+* **Escalation** (`"E"` or `"0"`)
+
+A post may have both.
 
 ---
 
 ## Step 1: Post Filtering
 
-```
-ALL posts are evaluated
-```
+All posts are evaluated.
+
+Unlike Task 1, there is **no evidence-based filtering**.
 
 ---
 
 ## Step 2: Label Parsing
 
-| Value | Binary |
-| ----- | ------ |
-| S / E | 1      |
-| 0     | 0      |
+Each label is converted to binary:
+
+| Raw value | Binary |
+| --------- | ------ |
+| `"S"`     | 1      |
+| `"0"`     | 0      |
+| `"E"`     | 1      |
+| `"0"`     | 0      |
+
+Switch and Escalation are evaluated independently.
 
 ---
 
-# Post-Level Evaluation
+## Post-Level Evaluation
 
-All posts pooled together.
+All posts are pooled together across the full dataset.
 
-Metrics per label:
+For each label:
 
 * Precision
 * Recall
 * F1
 
+### Example — Switch over 8 posts
+
+| Post | Gold | Pred | Result |
+| ---- | ---- | ---- | ------ |
+| 1    | S    | S    | TP     |
+| 2    | 0    | S    | FP     |
+| 3    | S    | 0    | FN     |
+| 4    | 0    | 0    | TN     |
+| 5    | S    | S    | TP     |
+| 6    | 0    | S    | FP     |
+| 7    | 0    | 0    | TN     |
+| 8    | S    | S    | TP     |
+
+* Precision = 3 / (3 + 2) = 0.600
+* Recall = 3 / (3 + 1) = 0.750
+* F1 = 0.667
+
+### Reported metrics
+
+| Key                | Description                                      |
+| ------------------ | ------------------------------------------------ |
+| `precision`        | fraction of predicted positives that are correct |
+| `recall`           | fraction of gold positives recovered             |
+| `f1`               | harmonic mean of precision and recall            |
+| `support_positive` | number of gold-positive posts                    |
+| `support_total`    | total number of posts                            |
+| `macro_f1`         | mean of Switch F1 and Escalation F1              |
+
+---
+
+## Timeline-Level Evaluation
+
+Posts are grouped by `timeline_id`.
+
+Metrics are computed **per timeline**, then macro-averaged across timelines.
+
+### Example — Switch label across 3 timelines
+
+#### Timeline A
+
+| Post | Gold | Pred |
+| ---- | ---- | ---- |
+| 1    | S    | S    |
+| 2    | 0    | 0    |
+| 3    | S    | 0    |
+| 4    | 0    | 0    |
+
+* Precision = 1.000
+* Recall = 0.500
+* F1 = 0.667
+
+#### Timeline B
+
+| Post | Gold | Pred |
+| ---- | ---- | ---- |
+| 1    | 0    | S    |
+| 2    | 0    | 0    |
+| 3    | 0    | 0    |
+
+* Precision = 0.000
+* Recall = 0.000
+* F1 = 0.000
+
+#### Timeline C
+
+| Post | Gold | Pred |
+| ---- | ---- | ---- |
+| 1    | 0    | 0    |
+| 2    | 0    | 0    |
+| 3    | 0    | 0    |
+
+* No gold positives and no predicted positives
+* Precision = 1.000
+* Recall = 1.000
+* F1 = 1.000
+
+### Macro-average across timelines
+
+* Precision = (1.000 + 0.000 + 1.000) / 3 = 0.667
+* Recall = (0.500 + 0.000 + 1.000) / 3 = 0.500
+* F1 = (0.667 + 0.000 + 1.000) / 3 = 0.556
+
+### Edge case: no-event timelines
+
+If both gold and prediction contain zero positives for a label within a timeline, that timeline receives:
+
+```text
+precision = 1.0
+recall = 1.0
+f1 = 1.0
 ```
-Macro F1 = mean(Switch F1, Escalation F1)
+
+This avoids penalizing correct prediction of complete absence.
+
+### Reported metrics
+
+| Key             | Description                                        |
+| --------------- | -------------------------------------------------- |
+| `precision`     | per-timeline precision, macro-averaged             |
+| `recall`        | per-timeline recall, macro-averaged                |
+| `f1`            | per-timeline F1, macro-averaged                    |
+| `num_timelines` | number of timelines                                |
+| `macro_f1`      | mean of timeline-level Switch F1 and Escalation F1 |
+
+---
+
+## Why both post-level and timeline-level?
+
+* **Post-level** rewards overall accuracy across the full dataset
+* **Timeline-level** ensures performance is distributed across timelines, not only driven by large timelines
+
+A model that performs well only on large timelines may still score poorly on timeline-level evaluation.
+
+---
+
+## Task 2 Ranking
+
+```text
+Task 2 Ranking = mean(Post-level Macro F1, Timeline-level Macro F1)
 ```
 
 ---
 
-# Timeline-Level Evaluation
+## Task 2 Pipeline Summary
 
-* Group posts by `timeline_id`
-* Compute metrics per timeline
-* Macro-average across timelines
-
----
-
-## Edge Case
-
-If no positives in both gold and prediction:
-
-```
-Score = 1.0
+```text
+All posts (no filtering)
+  ├─ Post-level:     pool all posts → P/R/F1 per label → macro F1
+  └─ Timeline-level: group by timeline_id → P/R/F1 per timeline → macro-average → macro F1
 ```
 
 ---
 
-## 🔑 Task 2 Ranking
+# 5. Evaluation Metrics Summary
 
+## Task 1.1 — Element Presence
+
+Each of the 6 elements × 2 valences gives **12 binary classifications**.
+
+Reported:
+
+* Per-element Precision, Recall, F1
+* Per-valence Macro F1 and Micro F1
+* Avg Macro F1 / Avg Micro F1
+* Overall Macro F1 / Overall Micro F1
+
+---
+
+## Task 1.1 — Subelement Classification
+
+Each element is a multi-class classification over valid subelements.
+
+Class `0` is excluded from scoring.
+
+Reported:
+
+* Per-element Macro F1 and Micro F1
+* Per-valence Macro F1 and Micro F1
+* Avg Macro F1 / Avg Micro F1
+* Overall Macro F1 / Overall Micro F1
+
+### Ranking aggregation
+
+1. Macro F1 per element
+2. Macro average across 6 elements within each valence
+3. Average adaptive and maladaptive
+
+```text
+Ranking = Subelement Classification Avg Macro F1
 ```
+
+---
+
+## Task 1.2 — Presence Rating
+
+Reported separately for:
+
+* adaptive
+* maladaptive
+* combined
+
+Metrics:
+
+* **MAE**
+* **RMSE**
+* **QWK**
+* **Spearman correlation**
+
+```text
+Ranking = mean(Adaptive RMSE, Maladaptive RMSE)
+```
+
+Lower is better.
+
+---
+
+## Task 2 — Moments of Change
+
+Reported for both post-level and timeline-level evaluation:
+
+* Precision
+* Recall
+* F1
+* Macro F1
+
+```text
 Ranking = mean(Post-level Macro F1, Timeline-level Macro F1)
 ```
 
 ---
 
-## Pipeline Summary
+# 6. Post Filtering Rules
 
-```
-All posts
-  ├─ Post-level metrics
-  └─ Timeline-level metrics
-```
+## Task 1
 
----
+Only posts with annotated evidence are evaluated.
 
-# 5. Subelement Schema
+A post is evaluated if at least one of:
 
-## Adaptive
+* `adaptive-state.Presence`
+* `maladaptive-state.Presence`
 
-| Element | Classes                                                |
-| ------- | ------------------------------------------------------ |
-| A       | Calm, Sad, Happy, Vigor, Justified anger, Proud, Loved |
-| B-O     | Relating, Autonomous                                   |
-| B-S     | Self-care                                              |
-| C-O     | Related, Facilitate autonomy                           |
-| C-S     | Self-acceptance                                        |
-| D       | Relatedness, Autonomy, Competence                      |
+contains a valid numeric value.
+
+Posts with empty evidence are skipped.
+
+## Task 2
+
+All posts are evaluated.
+
+Switch and Escalation labels are always present.
 
 ---
 
-## Maladaptive
+# 7. Environment
 
-| Element | Classes                                                      |
-| ------- | ------------------------------------------------------------ |
-| A       | Anxious, Depressed, Mania, Apathetic, Angry, Ashamed, Lonely |
-| B-O     | Fight/flight, Overcontrolled                                 |
-| B-S     | Self-harm                                                    |
-| C-O     | Detached/over-attached, Blocking autonomy                    |
-| C-S     | Self-criticism                                               |
-| D       | Relatedness unmet, Autonomy unmet, Competence unmet          |
+| Component    | Value                         |
+| ------------ | ----------------------------- |
+| Docker image | `codalab/codalab-legacy:py37` |
+| Python       | 3.7.3                         |
+| numpy        | 1.17.2                        |
+| scikit-learn | 0.21.3                        |
+| scipy        | 1.3.1                         |
+
+All dependencies are pre-installed. No additional `pip install` is required.
 
 ---
 
-# 6. Submission Format
+# 8. Subelement Schema
 
-## Task 1 (`task1_pred.json`)
+## Adaptive State
+
+| Element | # | Subelements                                                                                                                                                                 |
+| ------- | - | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| A       | 7 | 1=Calm (laid back), 2=Sad (emotional pain, grieving), 3=Happy (content, joyful, hopeful), 4=Vigor (energy), 5=Justifiably angry (assertive anger), 6=Proud, 7=Feeling loved |
+| B-O     | 2 | 1=Relating behavior, 2=Autonomous behavior                                                                                                                                  |
+| B-S     | 1 | 1=Self-care                                                                                                                                                                 |
+| C-O     | 2 | 1=Related, 2=Facilitating autonomy                                                                                                                                          |
+| C-S     | 1 | 1=Self-acceptance                                                                                                                                                           |
+| D       | 3 | 1=Relatedness, 2=Autonomy, 3=Competence                                                                                                                                     |
+
+## Maladaptive State
+
+| Element | # | Subelements                                                                                                                                                                   |
+| ------- | - | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| A       | 7 | 1=Anxious (fearful, tense), 2=Depressed (despair, hopeless), 3=Mania, 4=Apathetic (blunted affect), 5=Angry (aggression, disgust, contempt), 6=Ashamed (guilty), 7=Loneliness |
+| B-O     | 2 | 1=Fight or flight, 2=Overcontrolled                                                                                                                                           |
+| B-S     | 1 | 1=Self-harm                                                                                                                                                                   |
+| C-O     | 2 | 1=Detached or over-attached, 2=Blocking autonomy                                                                                                                              |
+| C-S     | 1 | 1=Self-criticism                                                                                                                                                              |
+| D       | 3 | 1=Relatedness unmet, 2=Autonomy unmet, 3=Competence unmet                                                                                                                     |
+
+---
+
+# 9. Submission Format
+
+Participants submit **separate JSON files** for Task 1 and Task 2.
+
+## Important — Privacy
+
+Do **not** include post text fields such as:
+
+* `post`
+* `text`
+* `body`
+
+These must be removed before submission.
+
+---
+
+## Task 1 Submission (`task1_pred.json`)
+
+A JSON array of per-post predictions.
 
 ```json
-{
-  "timeline_id": "...",
-  "post_id": "...",
-  "adaptive-state": {
-    "A": {"subelement": 3},
-    "Presence": 3
+[
+  {
+    "timeline_id": "d0fb4b962e",
+    "post_id": "5bf43c51a7",
+    "adaptive-state": {
+      "A": {"subelement": 3},
+      "B-O": {"subelement": 1},
+      "D": {"subelement": 1},
+      "Presence": 3
+    },
+    "maladaptive-state": {
+      "C-S": {"subelement": 1},
+      "Presence": 2
+    }
   },
-  "maladaptive-state": {
-    "Presence": 2
+  {
+    "timeline_id": "d0fb4b962e",
+    "post_id": "a1b2c3d4e5",
+    "adaptive-state": {
+      "Presence": 1
+    },
+    "maladaptive-state": {
+      "A": {"subelement": 2},
+      "B-S": {"subelement": 1},
+      "C-O": {"subelement": 1},
+      "Presence": 4
+    }
   }
-}
+]
 ```
+
+### Field constraints
+
+| Field                          | Type          | Required                   | Description                                     |
+| ------------------------------ | ------------- | -------------------------- | ----------------------------------------------- |
+| `timeline_id`                  | string        | Yes                        | Must match a timeline in the test data          |
+| `post_id`                      | string        | Yes                        | Must match a post in the test data              |
+| `adaptive-state`               | object        | No                         | Omit entirely if no adaptive state predicted    |
+| `maladaptive-state`            | object        | No                         | Omit entirely if no maladaptive state predicted |
+| `{state}.Presence`             | integer (1–5) | Yes, if state is present   | Psychological centrality rating                 |
+| `{state}.{element}`            | object        | No                         | Include only elements predicted as present      |
+| `{state}.{element}.subelement` | integer       | Yes, if element is present | Must be valid for that element × valence        |
+
+### Notes
+
+* Elements are: `A`, `B-O`, `B-S`, `C-O`, `C-S`, `D`
+* Exactly one subelement per element per valence
+* Only posts with gold evidence are evaluated, but extra predicted entries may be ignored depending on validation/coverage mode
 
 ---
 
-## Task 2 (`task2_pred.json`)
+## Task 2 Submission (`task2_pred.json`)
+
+A JSON array of per-post predictions.
 
 ```json
-{
-  "timeline_id": "...",
-  "post_id": "...",
-  "Switch": "S",
-  "Escalation": "0"
-}
+[
+  {
+    "timeline_id": "d0fb4b962e",
+    "post_id": "5bf43c51a7",
+    "Switch": "0",
+    "Escalation": "0"
+  },
+  {
+    "timeline_id": "d0fb4b962e",
+    "post_id": "a1b2c3d4e5",
+    "Switch": "S",
+    "Escalation": "E"
+  }
+]
+```
+
+### Field constraints
+
+| Field         | Type   | Required | Description                                   |
+| ------------- | ------ | -------- | --------------------------------------------- |
+| `timeline_id` | string | Yes      | Must match a timeline in the test data        |
+| `post_id`     | string | Yes      | Must match a post in the test data            |
+| `Switch`      | string | Yes      | `"S"` for switch, `"0"` for no switch         |
+| `Escalation`  | string | Yes      | `"E"` for escalation, `"0"` for no escalation |
+
+### Notes
+
+* Must include an entry for **every** post in the test data
+* Switch and Escalation are independent
+
+---
+
+# 10. Submission Validation Script
+
+A local validation script `validate_submission.py` is provided.
+
+It requires only Python 3.
+
+It checks:
+
+* **Privacy** — warns if post text fields are present
+* **Task 1**
+
+  * required fields
+  * at least one valence present
+  * Presence in range 1–5
+  * valid element keys
+  * valid subelement ranges
+  * no duplicate entries
+* **Task 2**
+
+  * required fields
+  * valid Switch values
+  * valid Escalation values
+  * no duplicate entries
+* **Coverage** (optional with `--test-dir`)
+
+  * every test post covered
+  * no extra posts included
+
+### Usage
+
+```bash
+# Format checks only
+python validate_submission.py --task1 task1_pred.json --task2 task2_pred.json
+
+# Format + coverage checks
+python validate_submission.py --task1 task1_pred.json --task2 task2_pred.json --test-dir <test_data_dir>
 ```
 
 ---
 
-## ⚠️ Privacy Rule
+# 11. Running the Evaluation Locally
 
-Do **NOT** include post text fields:
-
-```
-post, text, body → forbidden
-```
-
----
-
-# 7. Running Evaluation
+## Task 1 only
 
 ```bash
 python evaluate_task1.py --gold-dir <gold_dir> --pred-file task1_pred.json
+```
 
+## Task 2 only
+
+```bash
 python evaluate_task2.py --gold-dir <gold_dir> --pred-file task2_pred.json
-
-python run_evaluation.py \
-  --gold-dir <gold_dir> \
-  --task1-pred task1_pred.json \
-  --task2-pred task2_pred.json \
-  --output scores.txt
 ```
+
+## Both tasks — Codabench style output
+
+```bash
+python run_evaluation.py --gold-dir <gold_dir> \
+    --task1-pred task1_pred.json \
+    --task2-pred task2_pred.json \
+    --output scores.txt
+```
+
+## Also save nested JSON for debugging
+
+```bash
+python run_evaluation.py --gold-dir <gold_dir> \
+    --task1-pred task1_pred.json \
+    --task2-pred task2_pred.json \
+    --output scores.txt --json-output results.json
+```
+
+`<gold_dir>` should contain gold-standard timeline JSON files, one `*.json` per timeline.
+
+If a prediction file is missing, that task is skipped gracefully.
 
 ---
 
-# 8. Environment
+# 12. scores.txt Key Names
 
-| Component | Version |
-| --------- | ------- |
-| Python    | 3.7.3   |
-| numpy     | 1.17.2  |
-| sklearn   | 0.21.3  |
-| scipy     | 1.3.1   |
+All metric keys are kept at **36 characters or fewer** for Codabench compatibility.
 
-Docker:
+Each line in `scores.txt` has format:
 
+```text
+key: value
 ```
-codalab/codalab-legacy:py37
-```
+
+## Prefix convention
+
+| Prefix    | Meaning                            |
+| --------- | ---------------------------------- |
+| `t1ep`    | Task 1.1 Element Presence          |
+| `t1sc`    | Task 1.1 Subelement Classification |
+| `t1pr`    | Task 1.2 Presence Rating           |
+| `t2pl`    | Task 2 Post-Level                  |
+| `t2tl`    | Task 2 Timeline-Level              |
+| `t2_comb` | Task 2 Combined ranking fields     |
+
+## Common abbreviations
+
+| Abbrev        | Meaning               |
+| ------------- | --------------------- |
+| `ada`         | adaptive              |
+| `mal`         | maladaptive           |
+| `avg`         | average               |
+| `comb`        | combined              |
+| `maF1`        | macro F1              |
+| `miF1`        | micro F1              |
+| `prec`        | precision             |
+| `rec`         | recall                |
+| `sup`         | support               |
+| `sw`          | Switch                |
+| `esc`         | Escalation            |
+| `spear`       | Spearman              |
+| `BO/BS/CO/CS` | B-O / B-S / C-O / C-S |
+
+## Ranking keys
+
+| Key         | Formula                                 | Description      |
+| ----------- | --------------------------------------- | ---------------- |
+| `t1_1_rank` | `t1sc_avg_maF1`                         | Task 1.1 ranking |
+| `t1_2_rank` | (`t1pr_ada_rmse` + `t1pr_mal_rmse`) / 2 | Task 1.2 ranking |
+| `t2_rank`   | (`t2pl_maF1` + `t2tl_maF1`) / 2         | Task 2 ranking   |
+
+See `SCORES_KEY.md` for the complete metric key reference.
 
 ---
 
-# 9. Metric Key Names
+# 13. Final Summary
 
-| Prefix | Meaning                   |
-| ------ | ------------------------- |
-| t1ep   | Element presence          |
-| t1sc   | Subelement classification |
-| t1pr   | Presence rating           |
-| t2pl   | Post-level                |
-| t2tl   | Timeline-level            |
+```text
+Task 1.1 → classification:
+            - element presence (binary)
+            - subelement classification (multi-class)
 
----
+Task 1.2 → ordinal regression:
+            - Presence rating (1–5)
 
-## Ranking Keys
-
-| Key         | Meaning                 |
-| ----------- | ----------------------- |
-| `t1_1_rank` | Subelement Avg Macro F1 |
-| `t1_2_rank` | Avg RMSE                |
-| `t2_rank`   | Avg Macro F1            |
-
----
-
-# Final Summary
-
+Task 2   → binary detection:
+            - Switch
+            - Escalation
+            - post-level and timeline-level scoring
 ```
-Task 1.1 → classification (binary + multi-class)
-Task 1.2 → ordinal regression
-Task 2   → binary detection (post + timeline)
 
 Each task has its own ranking metric.
+
+````
+
+For the image itself, put the PNG into your repo, for example:
+
+```text
+CLPsych-2026/
+├── README.md
+└── assets/
+    └── evaluation_pipeline.png
+````
+
+Workflow:
+```md
+![Evaluation Pipeline Flowchart](evaluation_pipeline.png)
 ```
