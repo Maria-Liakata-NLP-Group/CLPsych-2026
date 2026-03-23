@@ -1,3 +1,5 @@
+Absolutely — here is the same README with a **Table of Contents added**, while keeping the rest unchanged in substance and flow.
+
 ````md
 # CLPsych 2026 — Shared Task Evaluation
 
@@ -8,6 +10,53 @@ The shared task consists of:
 - **Task 1.1** — ABCD Element & Subelement Classification
 - **Task 1.2** — Presence Rating
 - **Task 2** — Moments of Change (Switch & Escalation)
+
+---
+
+# Table of Contents
+
+- [Evaluation Pipeline](#evaluation-pipeline)
+- [Concept Overview](#concept-overview)
+- [1. Evaluation Overview](#1-evaluation-overview)
+  - [Task 1.1 — ABCD Element & Subelement Classification](#task-11--abcd-element--subelement-classification)
+  - [Task 1.2 — Presence Rating](#task-12--presence-rating)
+  - [Task 2 — Moments of Change](#task-2--moments-of-change)
+- [2. Task 1.1 Evaluation Logic](#2-task-11-evaluation-logic)
+  - [Overview](#overview)
+  - [Step 1: Post Filtering](#step-1-post-filtering)
+  - [Step 2: Per-Valence Filtering](#step-2-per-valence-filtering)
+  - [Step 3: Data Collection](#step-3-data-collection)
+  - [Step 4: Element Presence Metrics](#step-4-element-presence-metrics)
+  - [Step 5: Subelement Classification Metrics](#step-5-subelement-classification-metrics)
+  - [Task 1.1 Ranking](#task-11-ranking)
+  - [Task 1.1 Pipeline Summary](#task-11-pipeline-summary)
+- [3. Task 1.2 Evaluation Logic](#3-task-12-evaluation-logic)
+  - [Overview](#overview-1)
+  - [Step 1: Post Filtering](#step-1-post-filtering-1)
+  - [Step 2: Per-Valence Filtering](#step-2-per-valence-filtering-1)
+  - [Step 3: Collect Rating Pairs](#step-3-collect-rating-pairs)
+  - [Step 4: Compute Metrics](#step-4-compute-metrics)
+  - [Reporting Structure](#reporting-structure)
+  - [Task 1.2 Ranking](#task-12-ranking)
+  - [Task 1.2 Pipeline Summary](#task-12-pipeline-summary)
+- [4. Task 2 Evaluation Logic](#4-task-2-evaluation-logic)
+  - [Overview](#overview-2)
+  - [Step 1: Post Filtering](#step-1-post-filtering-2)
+  - [Step 2: Label Parsing](#step-2-label-parsing)
+  - [Post-Level Evaluation](#post-level-evaluation)
+  - [Timeline-Level Evaluation](#timeline-level-evaluation)
+  - [Why both post-level and timeline-level?](#why-both-post-level-and-timeline-level)
+  - [Task 2 Ranking](#task-2-ranking)
+  - [Task 2 Pipeline Summary](#task-2-pipeline-summary)
+- [5. Evaluation Metrics Summary](#5-evaluation-metrics-summary)
+- [6. Post Filtering Rules](#6-post-filtering-rules)
+- [7. Environment](#7-environment)
+- [8. Subelement Schema](#8-subelement-schema)
+- [9. Submission Format](#9-submission-format)
+- [10. Submission Validation Script](#10-submission-validation-script)
+- [11. Running the Evaluation Locally](#11-running-the-evaluation-locally)
+- [12. scores.txt Key Names](#12-scorestxt-key-names)
+- [13. Final Summary](#13-final-summary)
 
 ---
 
@@ -72,10 +121,13 @@ Each present element must receive exactly **one valid subelement** label.
 1. **Element presence** — binary classification for each element
 2. **Subelement classification** — multi-class classification for the selected subelement when the element is present
 
+---
+
 ## Task 1.2 — Presence Rating
 
 Each self-state also has a **Presence rating (1–5)** measuring psychological centrality.
 
+---
 
 ## Task 2 — Moments of Change
 
@@ -962,8 +1014,6 @@ Each task has its own ranking metric.
 
 ````
 
-For the image itself, put the PNG into your repo, for example:
-
 ```text
 CLPsych-2026/
 ├── README.md
@@ -971,7 +1021,6 @@ CLPsych-2026/
     └── evaluation_pipeline.png
 ````
 
-Workflow:
 ```md
-![Evaluation Pipeline Flowchart](evaluation_pipeline.png)
+![Evaluation Pipeline Flowchart](assets/evaluation_pipeline.png)
 ```
