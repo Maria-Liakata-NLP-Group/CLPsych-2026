@@ -1,266 +1,360 @@
+# CLPsych 2026 — Shared Task Evaluation
 
-```markdown
-# CLPsych-2026
+This repository contains the evaluation logic, metrics, and submission format for the **CLPsych 2026 Shared Task**.
 
-This repository contains the evaluation framework for the **CLPsych 2026 Shared Task**, which focuses on modeling psychological self-states and moments of change in timelines.
+The task consists of:
 
----
-
-# Tasks Overview
-
-- **Task 1.1** — ABCD Element & Subelement Classification  
-- **Task 1.2** — Presence Rating (1–5 ordinal)  
-- **Task 2** — Moments of Change (Switch & Escalation)
+* **Task 1.1** — ABCD Element & Subelement Classification
+* **Task 1.2** — Presence Rating (ordinal regression)
+* **Task 2** — Moments of Change (Switch & Escalation detection)
 
 ---
 
-# Task 1.1 — Element & Subelement Classification
+# 1. Evaluation Overview
+
+## Task 1.1 — ABCD Element & Subelement Classification
 
 Each post may contain:
-- **adaptive-state**
-- **maladaptive-state**
 
-Each state has up to **6 elements**:
+* **Adaptive self-state**
+* **Maladaptive self-state**
+
+Within each self-state, up to **6 elements** may be present:
 
 ```
-
 A, B-O, B-S, C-O, C-S, D
-
 ```
 
 Each element:
-- Binary presence (present / absent)
-- If present → exactly **one subelement**
+
+* Has **binary presence** (present / absent)
+* If present → exactly **one subelement** must be predicted
 
 ---
 
-## Evaluation Logic
+## Task 1.2 — Presence Rating
 
-### 1. Post Filtering
-
-Only posts with at least one valid gold `Presence` are evaluated.
-
-```
-
-~375 posts → ~225 evaluated → ~150 skipped
-
-```
+Each self-state has a **Presence score (1–5)** indicating psychological centrality.
 
 ---
 
-### 2. Valence Filtering
+## Task 2 — Moments of Change
 
-Each valence is evaluated independently:
+Each post has two independent binary labels:
 
-- If `adaptive-state.Presence` exists → evaluate adaptive
-- If `maladaptive-state.Presence` missing → skip maladaptive
-
----
-
-### 3. Element Presence (Binary)
-
-Each element is treated as a binary classification:
-
-- TP / FP / FN / TN computed per element × valence (12 total)
-
-Metrics:
-- Precision, Recall, F1 (per element)
-- Macro F1 (per valence)
-- Micro F1 (per valence)
-- Avg (adaptive + maladaptive)
-- Overall across all 12
+* **Switch** (`S` or `0`)
+* **Escalation** (`E` or `0`)
 
 ---
 
-### 4. Subelement Classification (Multi-class)
+# 2. Task 1.1 — Evaluation Logic
 
-Each element is a multi-class problem:
+## Overview
 
-```
+Two levels are evaluated:
 
-Classes = {1..K} (class 0 = absent, excluded)
-
-```
-
-Rules:
-- Wrong subelement → FP + FN
-- Missing element → FN
-- Spurious element → FP
-- Both absent → ignored
-
-Metrics per element:
-- Macro F1 (average over subelements)
-- Micro F1 (pooled)
-
-Aggregation:
-- Adaptive Macro F1 (6 elements)
-- Maladaptive Macro F1 (6 elements)
-- Avg Macro F1 = mean(adaptive, maladaptive)
+1. **Element presence** (binary)
+2. **Subelement classification** (multi-class)
 
 ---
 
-## 🏆 Ranking (Task 1.1)
+## Step 1: Post Filtering
+
+Only posts with at least one valid `Presence` in gold are evaluated.
 
 ```
-
-t1_1_rank = Avg Macro F1 (subelement classification)
-
+375 total posts
+→ ~225 with evidence → evaluated
+→ ~150 without evidence → skipped
 ```
 
 ---
 
-# Task 1.2 — Presence Rating
+## Step 2: Per-Valence Filtering
 
-Each state has a **Presence score (1–5)** indicating psychological centrality.
+Each valence is evaluated independently.
 
----
+Example:
 
-## Evaluation Logic
-
-### 1. Filtering
-
-Same as Task 1.1 (only posts with gold Presence).
+* Adaptive has Presence → evaluated
+* Maladaptive missing → **not evaluated at all**
 
 ---
 
-### 2. Pair Collection
+## Step 3: Data Collection
 
-For each (post, valence):
+### Element Presence (binary)
+
+| Element | Gold    | Pred    | Result |
+| ------- | ------- | ------- | ------ |
+| A       | present | present | TP     |
+| B-O     | present | absent  | FN     |
+| B-S     | absent  | present | FP     |
+| C-O     | absent  | absent  | TN     |
+| C-S     | absent  | absent  | TN     |
+| D       | present | present | TP     |
+
+---
+
+### Subelement Classification (multi-class)
 
 ```
+Gold: [A:3, BO:1, BS:0, CO:0, CS:0, D:2]
+Pred: [A:5, BO:0, BS:1, CO:0, CS:0, D:1]
+```
 
-(gold Presence, predicted Presence)
+* `0 = absent`
+* `1..K = subelement`
+
+---
+
+## Step 4: Element Presence Metrics
+
+Computed for **12 element × valence pairs**:
+
+* Precision, Recall, F1 (per element)
+* Macro / Micro F1 (per valence)
+* Avg Macro / Micro F1
+* Overall Macro / Micro F1
+
+---
+
+## Step 5: Subelement Classification Metrics
+
+Each element is treated as:
 
 ```
+Multi-class classification over {1..K}
+(Class 0 excluded from scoring)
+```
+
+### Important Rules
+
+* Wrong subelement → FP + FN
+* Missing element → FN
+* False element → FP
+* Both absent → ignored
+
+---
+
+### Per-element Metrics
+
+* **Macro F1** — average over subelement classes
+* **Micro F1** — pooled across classes
+
+---
+
+### Aggregation
+
+* Adaptive Macro F1 (6 elements)
+* Maladaptive Macro F1 (6 elements)
+* Avg Macro F1 = mean(adaptive, maladaptive)
+
+---
+
+## 🔑 Task 1.1 Ranking
+
+```
+Ranking = Subelement Classification Avg Macro F1
+```
+
+---
+
+## Pipeline Summary
+
+```
+Post filtering
+  └─ Valence filtering
+       ├─ Element presence → binary metrics
+       └─ Subelement classification → multi-class F1
+```
+
+---
+
+# 3. Task 1.2 — Presence Rating
+
+## Overview
+
+Evaluates **ordinal prediction (1–5)** per self-state.
+
+---
+
+## Step 1: Post Filtering
+
+Same as Task 1.1.
+
+---
+
+## Step 2: Per-Valence Filtering
+
+Only valences with gold Presence are evaluated.
+
+---
+
+## Step 3: Pair Collection
+
+| Post | Valence     | Gold | Pred |
+| ---- | ----------- | ---- | ---- |
+| 1    | adaptive    | 3    | 3    |
+| 1    | maladaptive | 4    | 2    |
+| 2    | maladaptive | 2    | 3    |
+
+### Default Rule
 
 If prediction is missing:
+
 ```
-
-pred = 1 (default)
-
+Pred Presence = 1
 ```
 
 ---
 
-### 3. Metrics
+## Step 4: Metrics
+
+| Metric   | Description              |
+| -------- | ------------------------ |
+| MAE      | Mean Absolute Error      |
+| RMSE     | Root Mean Squared Error  |
+| QWK      | Quadratic Weighted Kappa |
+| Spearman | Rank correlation         |
 
 Computed for:
-- adaptive
-- maladaptive
-- combined
 
-| Metric | Description |
-|--------|------------|
-| MAE | Mean Absolute Error |
-| RMSE | Root Mean Squared Error |
-| QWK | Quadratic Weighted Kappa |
-| Spearman | Rank correlation |
+* Adaptive
+* Maladaptive
+* Combined
 
 ---
 
-## 🏆 Ranking (Task 1.2)
+## 🔑 Task 1.2 Ranking
 
 ```
-
-t1_2_rank = mean(adaptive RMSE, maladaptive RMSE)
+Ranking = mean(Adaptive RMSE, Maladaptive RMSE)
 (lower is better)
-
 ```
 
 ---
 
-# Task 2 — Moments of Change
-
-Each post has:
-
-- **Switch**: `"S"` or `"0"`
-- **Escalation**: `"E"` or `"0"`
-
-Independent labels (can both be 1).
-
----
-
-## Evaluation Logic
-
-### 1. No Filtering
-
-All posts are evaluated.
-
----
-
-### 2. Binary Mapping
+## Pipeline Summary
 
 ```
-
-"S" → 1
-"E" → 1
-"0" → 0
-
+Post filtering
+  └─ Valence filtering
+       └─ Pair collection
+            └─ Metrics (MAE, RMSE, QWK, Spearman)
 ```
 
 ---
 
-## Post-Level Metrics
+# 4. Task 2 — Moments of Change
 
-Computed across all posts:
+## Overview
 
-- Precision, Recall, F1 (per label)
-- Macro F1 = mean(Switch F1, Escalation F1)
+Binary classification per post:
+
+* Switch
+* Escalation
 
 ---
 
-## Timeline-Level Metrics
+## Step 1: Post Filtering
 
-1. Group by `timeline_id`
-2. Compute metrics per timeline
-3. Macro-average across timelines
-
-Edge case:
 ```
-
-No gold positives AND no predictions → score = 1.0
-
+ALL posts are evaluated
 ```
 
 ---
 
-## 🏆 Ranking (Task 2)
+## Step 2: Label Parsing
 
-```
-
-t2_rank = mean(post-level Macro F1, timeline-level Macro F1)
-
-````
+| Value | Binary |
+| ----- | ------ |
+| S / E | 1      |
+| 0     | 0      |
 
 ---
 
-# Subelement Schema
+# Post-Level Evaluation
+
+All posts pooled together.
+
+Metrics per label:
+
+* Precision
+* Recall
+* F1
+
+```
+Macro F1 = mean(Switch F1, Escalation F1)
+```
+
+---
+
+# Timeline-Level Evaluation
+
+* Group posts by `timeline_id`
+* Compute metrics per timeline
+* Macro-average across timelines
+
+---
+
+## Edge Case
+
+If no positives in both gold and prediction:
+
+```
+Score = 1.0
+```
+
+---
+
+## 🔑 Task 2 Ranking
+
+```
+Ranking = mean(Post-level Macro F1, Timeline-level Macro F1)
+```
+
+---
+
+## Pipeline Summary
+
+```
+All posts
+  ├─ Post-level metrics
+  └─ Timeline-level metrics
+```
+
+---
+
+# 5. Subelement Schema
 
 ## Adaptive
 
-| Element | Classes |
-|--------|--------|
-| A | 7 |
-| B-O | 2 |
-| B-S | 1 |
-| C-O | 2 |
-| C-S | 1 |
-| D | 3 |
-
-## Maladaptive
-
-| Element | Classes |
-|--------|--------|
-| A | 7 |
-| B-O | 2 |
-| B-S | 1 |
-| C-O | 2 |
-| C-S | 1 |
-| D | 3 |
+| Element | Classes                                                |
+| ------- | ------------------------------------------------------ |
+| A       | Calm, Sad, Happy, Vigor, Justified anger, Proud, Loved |
+| B-O     | Relating, Autonomous                                   |
+| B-S     | Self-care                                              |
+| C-O     | Related, Facilitate autonomy                           |
+| C-S     | Self-acceptance                                        |
+| D       | Relatedness, Autonomy, Competence                      |
 
 ---
 
-# Submission Format
+## Maladaptive
+
+| Element | Classes                                                      |
+| ------- | ------------------------------------------------------------ |
+| A       | Anxious, Depressed, Mania, Apathetic, Angry, Ashamed, Lonely |
+| B-O     | Fight/flight, Overcontrolled                                 |
+| B-S     | Self-harm                                                    |
+| C-O     | Detached/over-attached, Blocking autonomy                    |
+| C-S     | Self-criticism                                               |
+| D       | Relatedness unmet, Autonomy unmet, Competence unmet          |
+
+---
+
+# 6. Submission Format
 
 ## Task 1 (`task1_pred.json`)
 
@@ -271,9 +365,12 @@ t2_rank = mean(post-level Macro F1, timeline-level Macro F1)
   "adaptive-state": {
     "A": {"subelement": 3},
     "Presence": 3
+  },
+  "maladaptive-state": {
+    "Presence": 2
   }
 }
-````
+```
 
 ---
 
@@ -290,16 +387,23 @@ t2_rank = mean(post-level Macro F1, timeline-level Macro F1)
 
 ---
 
-# Running Evaluation
+## ⚠️ Privacy Rule
+
+Do **NOT** include post text fields:
+
+```
+post, text, body → forbidden
+```
+
+---
+
+# 7. Running Evaluation
 
 ```bash
-# Task 1
 python evaluate_task1.py --gold-dir <gold_dir> --pred-file task1_pred.json
 
-# Task 2
 python evaluate_task2.py --gold-dir <gold_dir> --pred-file task2_pred.json
 
-# Combined
 python run_evaluation.py \
   --gold-dir <gold_dir> \
   --task1-pred task1_pred.json \
@@ -309,7 +413,24 @@ python run_evaluation.py \
 
 ---
 
-# Score Key Prefixes
+# 8. Environment
+
+| Component | Version |
+| --------- | ------- |
+| Python    | 3.7.3   |
+| numpy     | 1.17.2  |
+| sklearn   | 0.21.3  |
+| scipy     | 1.3.1   |
+
+Docker:
+
+```
+codalab/codalab-legacy:py37
+```
+
+---
+
+# 9. Metric Key Names
 
 | Prefix | Meaning                   |
 | ------ | ------------------------- |
@@ -321,10 +442,22 @@ python run_evaluation.py \
 
 ---
 
-# Summary
+## Ranking Keys
+
+| Key         | Meaning                 |
+| ----------- | ----------------------- |
+| `t1_1_rank` | Subelement Avg Macro F1 |
+| `t1_2_rank` | Avg RMSE                |
+| `t2_rank`   | Avg Macro F1            |
+
+---
+
+# Final Summary
 
 ```
 Task 1.1 → classification (binary + multi-class)
 Task 1.2 → ordinal regression
-Task 2   → binary event detection (post + timeline level)
+Task 2   → binary detection (post + timeline)
+
+Each task has its own ranking metric.
 ```
