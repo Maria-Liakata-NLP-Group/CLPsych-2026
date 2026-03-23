@@ -54,12 +54,6 @@ The shared task consists of:
 
 
 
-# Evaluation Pipeline
-
-The following diagram summarizes the full evaluation flow across Task 1 and Task 2.
-
-![Evaluation Pipeline Flowchart](assets/evaluation_pipeline.png)
-
 ## What the flowchart shows
 
 - **Task 1** starts from all posts, then filters to only posts with gold evidence
@@ -1005,17 +999,9 @@ Each task has its own ranking metric.
 
 ````
 
-And this repo structure is correct for your README reference:
+# Evaluation Pipeline
 
-```text
-CLPsych-2026/
-├── README.md
-└── assets/
-    └── evaluation_pipeline.png
-````
+The following diagram summarizes the full evaluation flow across Task 1 and Task 2.
 
-with:
-
-```md
 ![Evaluation Pipeline Flowchart](assets/evaluation_pipeline.png)
-```
+
