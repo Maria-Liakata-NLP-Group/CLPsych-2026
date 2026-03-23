@@ -1,5 +1,5 @@
 
-````md
+````
 # CLPsych 2026 — Shared Task Evaluation
 
 This repository contains the evaluation logic, metrics, submission format, and scoring pipeline for the **CLPsych 2026 Shared Task**.
