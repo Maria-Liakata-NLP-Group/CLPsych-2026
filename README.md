@@ -72,8 +72,6 @@ Each present element must receive exactly **one valid subelement** label.
 1. **Element presence** — binary classification for each element
 2. **Subelement classification** — multi-class classification for the selected subelement when the element is present
 
----
-
 ## Task 1.2 — Presence Rating
 
 Each self-state also has a **Presence rating (1–5)** measuring psychological centrality.
