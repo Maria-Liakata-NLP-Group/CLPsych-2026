@@ -76,7 +76,6 @@ Each present element must receive exactly **one valid subelement** label.
 
 Each self-state also has a **Presence rating (1–5)** measuring psychological centrality.
 
----
 
 ## Task 2 — Moments of Change
 
