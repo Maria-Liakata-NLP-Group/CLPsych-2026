@@ -54,7 +54,7 @@ The shared task consists of:
 - [12. scores.txt Key Names](#12-scorestxt-key-names)
 - [13. Final Summary](#13-final-summary)
 
----
+
 
 # Evaluation Pipeline
 
@@ -77,7 +77,7 @@ The following diagram summarizes the full evaluation flow across Task 1 and Task
   - **Task 1.2**
   - **Task 2**
 
----
+
 
 # Concept Overview
 
@@ -93,7 +93,7 @@ The diagram also captures the conceptual relationship between the tasks:
   - Escalation detection
   - Evaluation both at post level and timeline level
 
----
+
 
 # 1. Evaluation Overview
 
@@ -117,13 +117,13 @@ Each present element must receive exactly **one valid subelement** label.
 1. **Element presence** — binary classification for each element
 2. **Subelement classification** — multi-class classification for the selected subelement when the element is present
 
----
+
 
 ## Task 1.2 — Presence Rating
 
 Each self-state also has a **Presence rating (1–5)** measuring psychological centrality.
 
----
+
 
 ## Task 2 — Moments of Change
 
@@ -139,7 +139,7 @@ A post may have:
 * only Escalation
 * both
 
----
+
 
 # 2. Task 1.1 Evaluation Logic
 
@@ -150,7 +150,7 @@ Task 1.1 evaluates two levels:
 1. **Element presence** (binary): is element X present in this valence?
 2. **Subelement classification** (multi-class): if present, which subelement was selected?
 
----
+
 
 ## Step 1: Post Filtering
 
@@ -161,7 +161,7 @@ Only posts with at least one valid `Presence` value in gold are evaluated. Posts
 ~150 posts with no evidence → skipped
 ```
 
----
+
 
 ## Step 2: Per-Valence Filtering
 
@@ -176,7 +176,7 @@ The 6 maladaptive element slots are **not evaluated at all** for that post:
 * no FN
 * no TN
 
----
+
 
 ## Step 3: Data Collection
 
@@ -211,7 +211,7 @@ Gold adaptive:  [A:3, BO:1, BS:0, CO:0, CS:0, D:2]
 Pred adaptive:  [A:5, BO:0, BS:1, CO:0, CS:0, D:1]
 ```
 
----
+
 
 ## Step 4: Element Presence Metrics
 
@@ -233,7 +233,7 @@ Metrics computed:
 * **Overall Macro F1 / Overall Micro F1**
 * **Support** = number of gold positives for each element × valence pair
 
----
+
 
 ## Step 5: Subelement Classification Metrics
 
@@ -286,7 +286,7 @@ For `adaptive-state:A` across 5 posts:
 
 **Note:** For elements with only one subelement (`B-S`, `C-S`), subelement F1 is equivalent to element presence F1.
 
----
+
 
 ## Task 1.1 Ranking
 
@@ -300,7 +300,7 @@ Ranking uses **subelement classification only**.
 Task 1.1 Ranking = Subelement Classification Avg Macro F1
 ```
 
----
+
 
 ## Task 1.1 Pipeline Summary
 
@@ -311,7 +311,7 @@ Post filtering:          only posts with gold Presence
        └─ Subelement classification: multi-class per element → F1 per element, per valence, overall
 ```
 
----
+
 
 # 3. Task 1.2 Evaluation Logic
 
@@ -325,13 +325,13 @@ Task 1.2 evaluates the **Presence rating** (1–5 ordinal scale) for each self-s
 
 Same as Task 1.1: only posts with at least one valid gold `Presence` are evaluated.
 
----
+
 
 ## Step 2: Per-Valence Filtering
 
 A Presence score is evaluated for a valence only if the gold data has a valid integer `Presence` from 1 to 5.
 
----
+
 
 ## Step 3: Collect Rating Pairs
 
@@ -355,7 +355,7 @@ If gold has a Presence value but the prediction omits the valence or omits `Pres
 
 This penalizes missing predictions instead of skipping them.
 
----
+
 
 ## Step 4: Compute Metrics
 
@@ -394,7 +394,7 @@ QWK and Spearman are computed on the full vectors.
 
 The `combined` split concatenates adaptive and maladaptive rating pairs into one pool and computes all metrics on the combined vectors.
 
----
+
 
 ## Reporting Structure
 
@@ -406,7 +406,7 @@ The `combined` split concatenates adaptive and maladaptive rating pairs into one
 }
 ```
 
----
+
 
 ## Task 1.2 Ranking
 
@@ -416,7 +416,7 @@ Task 1.2 Ranking = mean(Adaptive RMSE, Maladaptive RMSE)
 
 Lower is better.
 
----
+
 
 ## Task 1.2 Pipeline Summary
 
@@ -427,7 +427,7 @@ Post filtering:          only posts with gold Presence
             └─ Metrics: MAE, RMSE, QWK, Spearman per valence and combined
 ```
 
----
+
 
 # 4. Task 2 Evaluation Logic
 
@@ -442,7 +442,7 @@ The two labels are independent:
 
 A post may have both.
 
----
+
 
 ## Step 1: Post Filtering
 
@@ -450,7 +450,7 @@ All posts are evaluated.
 
 Unlike Task 1, there is **no evidence-based filtering**.
 
----
+
 
 ## Step 2: Label Parsing
 
@@ -465,7 +465,7 @@ Each label is converted to binary:
 
 Switch and Escalation are evaluated independently.
 
----
+
 
 ## Post-Level Evaluation
 
@@ -505,7 +505,7 @@ For each label:
 | `support_total`    | total number of posts                            |
 | `macro_f1`         | mean of Switch F1 and Escalation F1              |
 
----
+
 
 ## Timeline-Level Evaluation
 
@@ -581,7 +581,7 @@ This avoids penalizing correct prediction of complete absence.
 | `num_timelines` | number of timelines                                |
 | `macro_f1`      | mean of timeline-level Switch F1 and Escalation F1 |
 
----
+
 
 ## Why both post-level and timeline-level?
 
@@ -590,7 +590,7 @@ This avoids penalizing correct prediction of complete absence.
 
 A model that performs well only on large timelines may still score poorly on timeline-level evaluation.
 
----
+
 
 ## Task 2 Ranking
 
@@ -598,7 +598,7 @@ A model that performs well only on large timelines may still score poorly on tim
 Task 2 Ranking = mean(Post-level Macro F1, Timeline-level Macro F1)
 ```
 
----
+
 
 ## Task 2 Pipeline Summary
 
@@ -608,7 +608,6 @@ All posts (no filtering)
   └─ Timeline-level: group by timeline_id → P/R/F1 per timeline → macro-average → macro F1
 ```
 
----
 
 # 5. Evaluation Metrics Summary
 
@@ -623,7 +622,7 @@ Reported:
 * Avg Macro F1 / Avg Micro F1
 * Overall Macro F1 / Overall Micro F1
 
----
+
 
 ## Task 1.1 — Subelement Classification
 
@@ -648,7 +647,6 @@ Reported:
 Ranking = Subelement Classification Avg Macro F1
 ```
 
----
 
 ## Task 1.2 — Presence Rating
 
@@ -671,7 +669,7 @@ Ranking = mean(Adaptive RMSE, Maladaptive RMSE)
 
 Lower is better.
 
----
+
 
 ## Task 2 — Moments of Change
 
@@ -686,7 +684,7 @@ Reported for both post-level and timeline-level evaluation:
 Ranking = mean(Post-level Macro F1, Timeline-level Macro F1)
 ```
 
----
+
 
 # 6. Post Filtering Rules
 
@@ -709,7 +707,7 @@ All posts are evaluated.
 
 Switch and Escalation labels are always present.
 
----
+
 
 # 7. Environment
 
@@ -723,7 +721,7 @@ Switch and Escalation labels are always present.
 
 All dependencies are pre-installed. No additional `pip install` is required.
 
----
+
 
 # 8. Subelement Schema
 
@@ -749,7 +747,7 @@ All dependencies are pre-installed. No additional `pip install` is required.
 | C-S     | 1 | 1=Self-criticism                                                                                                                                                              |
 | D       | 3 | 1=Relatedness unmet, 2=Autonomy unmet, 3=Competence unmet                                                                                                                     |
 
----
+
 
 # 9. Submission Format
 
@@ -765,7 +763,7 @@ Do **not** include post text fields such as:
 
 These must be removed before submission.
 
----
+
 
 ## Task 1 Submission (`task1_pred.json`)
 
@@ -821,7 +819,7 @@ A JSON array of per-post predictions.
 * Exactly one subelement per element per valence
 * Only posts with gold evidence are evaluated, but extra predicted entries may be ignored depending on validation/coverage mode
 
----
+
 
 ## Task 2 Submission (`task2_pred.json`)
 
@@ -858,7 +856,7 @@ A JSON array of per-post predictions.
 * Must include an entry for **every** post in the test data
 * Switch and Escalation are independent
 
----
+
 
 # 10. Submission Validation Script
 
@@ -898,7 +896,7 @@ python validate_submission.py --task1 task1_pred.json --task2 task2_pred.json
 python validate_submission.py --task1 task1_pred.json --task2 task2_pred.json --test-dir <test_data_dir>
 ```
 
----
+
 
 # 11. Running the Evaluation Locally
 
@@ -936,7 +934,7 @@ python run_evaluation.py --gold-dir <gold_dir> \
 
 If a prediction file is missing, that task is skipped gracefully.
 
----
+
 
 # 12. scores.txt Key Names
 
@@ -987,7 +985,7 @@ key: value
 
 See `SCORES_KEY.md` for the complete metric key reference.
 
----
+
 
 # 13. Final Summary
 
