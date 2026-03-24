@@ -9,6 +9,7 @@ Usage:
 
 import argparse
 import json
+import os
 import sys
 from pathlib import Path
 
@@ -18,10 +19,25 @@ PRESENCE_RANGE = range(1, 6)
 SWITCH_VALUES = {"0", "S"}
 ESCALATION_VALUES = {"0", "E"}
 
-# Number of valid subelement indices per element x valence
-NUM_SUBELEMENTS = {
-    "adaptive-state": {"A": 7, "B-O": 2, "B-S": 1, "C-O": 2, "C-S": 1, "D": 3},
-    "maladaptive-state": {"A": 7, "B-O": 2, "B-S": 1, "C-O": 2, "C-S": 1, "D": 3},
+# Valid subelement indices per element x valence
+# Subelements use a shared numbering scheme across both valences
+VALID_SUBELEMENTS = {
+    "adaptive-state": {
+        "A": {1, 3, 5, 7, 9, 11, 13},
+        "B-O": {1, 3},
+        "B-S": {1},
+        "C-O": {1, 3},
+        "C-S": {1},
+        "D": {1, 3, 5},
+    },
+    "maladaptive-state": {
+        "A": {2, 4, 6, 8, 10, 12, 14},
+        "B-O": {2, 4},
+        "B-S": {2},
+        "C-O": {2, 4},
+        "C-S": {2},
+        "D": {2, 4, 6},
+    },
 }
 
 
@@ -136,11 +152,11 @@ def validate_task1(data, test_posts=None):
                     errors.append("%s: '%s.%s' missing 'subelement'" % (prefix, valence, k))
                     continue
                 sub = v["subelement"]
-                max_idx = NUM_SUBELEMENTS[valence][k]
-                if not isinstance(sub, int) or sub < 1 or sub > max_idx:
+                valid = VALID_SUBELEMENTS[valence][k]
+                if not isinstance(sub, int) or sub not in valid:
                     errors.append(
-                        "%s: '%s.%s.subelement' must be integer 1-%d, got %r" % (
-                            prefix, valence, k, max_idx, sub))
+                        "%s: '%s.%s.subelement' must be one of %s, got %r" % (
+                            prefix, valence, k, sorted(valid), sub))
 
         if not has_any_valence:
             errors.append("%s: must have at least one of 'adaptive-state' or 'maladaptive-state'" % prefix)
@@ -223,11 +239,18 @@ def main():
         print("=" * 50)
         print("Validating Task 1 submission...")
         print("=" * 50)
+        
+        name_err = (os.path.basename(args.task1) != "task1_pred.json")
+        if name_err:
+            print("FAILED: filename should be 'task1_pred.json' for Task 1 submission")
+            all_valid = False
+
         data, load_err = load_json(args.task1)
         if load_err:
             print("FAILED: %s" % load_err)
             all_valid = False
-        else:
+            
+        if not name_err and not load_err:
             text_warnings = check_post_text(data, "Task 1")
             if text_warnings:
                 for w in text_warnings:
@@ -249,11 +272,18 @@ def main():
         print("=" * 50)
         print("Validating Task 2 submission...")
         print("=" * 50)
+
+        name_err = (os.path.basename(args.task2) != "task2_pred.json")
+        if name_err:
+            print("FAILED: filename should be 'task2_pred.json' for Task 2 submission")
+            all_valid = False
+
         data, load_err = load_json(args.task2)
         if load_err:
             print("FAILED: %s" % load_err)
             all_valid = False
-        else:
+        
+        if not name_err and not load_err:
             text_warnings = check_post_text(data, "Task 2")
             if text_warnings:
                 for w in text_warnings:
