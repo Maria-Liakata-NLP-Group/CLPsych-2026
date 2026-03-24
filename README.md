@@ -857,7 +857,7 @@ It checks both **file format and submission completeness**:
 * valid subelement ranges
 * no duplicate entries
 
----
+
 
 ### Task 2 checks
 
@@ -866,7 +866,7 @@ It checks both **file format and submission completeness**:
 * valid Escalation values
 * no duplicate entries
 
----
+
 
 ### Coverage checks (optional with `--test-dir`)
 
@@ -875,7 +875,6 @@ It checks both **file format and submission completeness**:
 * Task 2 contains **one entry for every post**
 * Task 1 may omit posts without gold evidence
 
----
 
 ## Usage
 
