@@ -693,9 +693,9 @@ These must be removed before submission.
 
 Participants may submit predictions for one or both tasks. If a prediction file for a task is not provided, that task will be skipped and only the other task will be scored.
 
-## Task 1 Submission (`task1_pred.json`)
+### Task 1 Submission (`task1_pred.json`)
 
-A JSON array of per-post predictions.
+A JSON array. Each entry is one post with predicted self-states:
 
 ```json
 [
@@ -729,27 +729,25 @@ A JSON array of per-post predictions.
 ]
 ```
 
-### Field constraints
+**Field constraints:**
 
-| Field                          | Type          | Required                   | Description                                     |
-| ------------------------------ | ------------- | -------------------------- | ----------------------------------------------- |
-| `timeline_id`                  | string        | Yes                        | Must match a timeline in the test data          |
-| `post_id`                      | string        | Yes                        | Must match a post in the test data              |
-| `adaptive-state`               | object        | No                         | Omit entirely if no adaptive state predicted    |
-| `maladaptive-state`            | object        | No                         | Omit entirely if no maladaptive state predicted |
-| `{state}.Presence`             | integer (1–5) | Yes, if state is present   | Psychological centrality rating                 |
-| `{state}.{element}`            | object        | No                         | Include only elements predicted as present      |
-| `{state}.{element}.subelement` | integer       | Yes, if element is present | Must be valid for that element × valence        |
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `timeline_id` | string | Yes | Must match a timeline in the test data |
+| `post_id` | string | Yes | Must match a post in the test data |
+| `adaptive-state` | object | No | Omit entirely if no adaptive state predicted |
+| `maladaptive-state` | object | No | Omit entirely if no maladaptive state predicted |
+| `{state}.Presence` | integer (1-5) | Yes, if state is present | Psychological centrality rating |
+| `{state}.{element}` | object | No | Include only elements predicted as present |
+| `{state}.{element}.subelement` | integer | Yes, if element is present | Must be a valid index for this element x valence (see schema above) |
 
-### Notes
+- **Elements**: `A`, `B-O`, `B-S`, `C-O`, `C-S`, `D`
+- Exactly one subelement per element per valence.
+- Only include entries for posts that have annotated evidence in the gold data. Posts without gold evidence are ignored during evaluation.
 
-* Elements are: `A`, `B-O`, `B-S`, `C-O`, `C-S`, `D`
-* Exactly one subelement per element per valence
-* Only include entries for posts that have annotated evidence in the gold data. Posts without gold evidence are ignored during evaluation.
+### Task 2 Submission (`task2_pred.json`)
 
-## Task 2 Submission (`task2_pred.json`)
-
-A JSON array of per-post predictions.
+A JSON array. Each entry is one post with Switch and Escalation labels:
 
 ```json
 [
@@ -768,19 +766,19 @@ A JSON array of per-post predictions.
 ]
 ```
 
-### Field constraints
+**Field constraints:**
 
-| Field         | Type   | Required | Description                                   |
-| ------------- | ------ | -------- | --------------------------------------------- |
-| `timeline_id` | string | Yes      | Must match a timeline in the test data        |
-| `post_id`     | string | Yes      | Must match a post in the test data            |
-| `Switch`      | string | Yes      | `"S"` for switch, `"0"` for no switch         |
-| `Escalation`  | string | Yes      | `"E"` for escalation, `"0"` for no escalation |
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `timeline_id` | string | Yes | Must match a timeline in the test data |
+| `post_id` | string | Yes | Must match a post in the test data |
+| `Switch` | string | Yes | `"S"` for switch, `"0"` for no switch |
+| `Escalation` | string | Yes | `"E"` for escalation, `"0"` for no escalation |
 
-### Notes
+- Must include an entry for **every** post in the test data.
+- Switch and Escalation are independent — a post can be labeled as both `"S"` and `"E"`.
 
-* Must include an entry for **every** post in the test data
-* Switch and Escalation are independent
+---
 
 # 10. Submission Validation Script
 
