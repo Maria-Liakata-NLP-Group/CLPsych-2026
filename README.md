@@ -675,9 +675,33 @@ All dependencies are pre-installed. No additional `pip install` is required.
 | C-S     | 1 | 1=Self-criticism                                                                                                                                                              |
 | D       | 3 | 1=Relatedness unmet, 2=Autonomy unmet, 3=Competence unmet                                                                                                                     |
 
+Here is the **fully updated, clean, and merged version** of the relevant sections with all fixes applied consistently.
+
+---
+
 # 9. Submission Format
 
-Participants submit **separate JSON files** for Task 1 and Task 2.
+Participants submit **separate ZIP files** for Task 1 and Task 2 on their respective Codabench pages.
+
+---
+
+## Required archive structure
+
+### Task 1 submission
+
+```text
+predictions.zip
+|- task1_pred.json
+```
+
+### Task 2 submission
+
+```text
+predictions.zip
+|- task2_pred.json
+```
+
+---
 
 ## Important — Privacy
 
@@ -689,94 +713,148 @@ Do **not** include post text fields such as:
 
 These must be removed before submission.
 
+---
+
 ## Note
 
-Participants may submit predictions for one or both tasks. If a prediction file for a task is not provided, that task will be skipped and only the other task will be scored.
+Participants may submit predictions for one or both tasks.
+If a prediction file for a task is not provided, that task will be skipped and only the other task will be scored.
 
-### Task 1 Submission (`task1_pred.json`)
+---
 
-A JSON array. Each entry is one post with predicted self-states:
+## Task 1 Submission (`task1_pred.json`)
+
+A JSON array. Each entry corresponds to one post with predicted self-states.
 
 ```json
 [
   {
-    "timeline_id": "d0fb4b962e",
-    "post_id": "5bf43c51a7",
+    "timeline_id": "91b6a42835",
+    "post_id": "28641e5b6d",
     "adaptive-state": {
-      "A": {"subelement": 3},
-      "B-O": {"subelement": 1},
-      "D": {"subelement": 1},
-      "Presence": 3
+      "Presence": 5,
+      "B-S": { "subelement": 1 },
+      "B-O": { "subelement": 1 },
+      "C-S": { "subelement": 1 },
+      "D": { "subelement": 3 }
     },
     "maladaptive-state": {
-      "C-S": {"subelement": 1},
-      "Presence": 2
+      "Presence": 2,
+      "C-S": { "subelement": 2 }
     }
   },
   {
-    "timeline_id": "d0fb4b962e",
-    "post_id": "a1b2c3d4e5",
+    "timeline_id": "306d938d4b",
+    "post_id": "308b0c2c6c",
     "adaptive-state": {
-      "Presence": 1
+      "Presence": 2,
+      "B-S": { "subelement": 1 },
+      "B-O": { "subelement": 1 }
     },
     "maladaptive-state": {
-      "A": {"subelement": 2},
-      "B-S": {"subelement": 1},
-      "C-O": {"subelement": 1},
-      "Presence": 4
+      "Presence": 2,
+      "A": { "subelement": 2 }
     }
   }
 ]
 ```
 
-**Field constraints:**
+---
 
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| `timeline_id` | string | Yes | Must match a timeline in the test data |
-| `post_id` | string | Yes | Must match a post in the test data |
-| `adaptive-state` | object | No | Omit entirely if no adaptive state predicted |
-| `maladaptive-state` | object | No | Omit entirely if no maladaptive state predicted |
-| `{state}.Presence` | integer (1-5) | Yes, if state is present | Psychological centrality rating |
-| `{state}.{element}` | object | No | Include only elements predicted as present |
-| `{state}.{element}.subelement` | integer | Yes, if element is present | Must be a valid index for this element x valence (see schema above) |
+### Field constraints
 
-- **Elements**: `A`, `B-O`, `B-S`, `C-O`, `C-S`, `D`
-- Exactly one subelement per element per valence.
-- Only include entries for posts that have annotated evidence in the gold data. Posts without gold evidence are ignored during evaluation.
+| Field                          | Type          | Required                   | Description                                      |
+| ------------------------------ | ------------- | -------------------------- | ------------------------------------------------ |
+| `timeline_id`                  | string        | Yes                        | Must match a timeline in the test data           |
+| `post_id`                      | string        | Yes                        | Must match a post in the test data               |
+| `adaptive-state`               | object        | No                         | Omit entirely if no adaptive state predicted     |
+| `maladaptive-state`            | object        | No                         | Omit entirely if no maladaptive state predicted  |
+| `{state}.Presence`             | integer (1–5) | Yes, if state is present   | Psychological centrality rating                  |
+| `{state}.{element}`            | object        | No                         | Omitted elements will be scored as not present   |
+| `{state}.{element}.subelement` | integer       | Yes, if element is present | Must be a valid index for this element × valence |
 
-### Task 2 Submission (`task2_pred.json`)
+---
 
-A JSON array. Each entry is one post with Switch and Escalation labels:
+### Additional rules
+
+* **Elements**: `A`, `B-O`, `B-S`, `C-O`, `C-S`, `D`
+* Exactly **one subelement per element per valence**
+* Include **only elements predicted as present**
+* Only include entries for posts that have annotated evidence in the gold data
+  → Posts without gold evidence are **ignored during evaluation**
+
+---
+
+## Task 2 Submission (`task2_pred.json`)
+
+A JSON array. Each entry corresponds to one post with Switch and Escalation labels.
+
+All posts from all timelines must be included in a **single flat list**.
 
 ```json
 [
   {
-    "timeline_id": "d0fb4b962e",
-    "post_id": "5bf43c51a7",
+    "timeline_id": "3db8573df5",
+    "post_id": "e383f54895",
     "Switch": "0",
     "Escalation": "0"
   },
   {
-    "timeline_id": "d0fb4b962e",
-    "post_id": "a1b2c3d4e5",
+    "timeline_id": "3db8573df5",
+    "post_id": "77cbbd5cc2",
     "Switch": "S",
     "Escalation": "E"
   }
 ]
 ```
 
-**Field constraints:**
+---
 
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| `timeline_id` | string | Yes | Must match a timeline in the test data |
-| `post_id` | string | Yes | Must match a post in the test data |
-| `Switch` | string | Yes | `"S"` for switch, `"0"` for no switch |
-| `Escalation` | string | Yes | `"E"` for escalation, `"0"` for no escalation |
+### Field constraints
 
-- Must include an entry for **every** post in the test data.
-- Switch and Escalation are independent — a post can be labeled as both `"S"` and `"E"`.
+| Field         | Type   | Required | Description                                   |
+| ------------- | ------ | -------- | --------------------------------------------- |
+| `timeline_id` | string | Yes      | Must match a timeline in the test data        |
+| `post_id`     | string | Yes      | Must match a post in the test data            |
+| `Switch`      | string | Yes      | `"S"` for switch, `"0"` for no switch         |
+| `Escalation`  | string | Yes      | `"E"` for escalation, `"0"` for no escalation |
+
+---
+
+### Additional rules
+
+* Must include **one entry for every post in the test data**
+* All timelines must be merged into a **single JSON array**
+* No grouping or nesting by timeline
+* Switch and Escalation are **independent labels**
+
+  * A post may be:
+
+    * neither
+    * Switch only
+    * Escalation only
+    * both `"S"` and `"E"`
+
+---
+
+# 4. Task 2 Evaluation Logic (Updated Sections)
+
+## Overview
+
+Task 2 evaluates **Moments of Change** detection.
+
+Each post in the test data must receive two independent labels:
+
+* **Switch**
+* **Escalation**
+
+---
+
+## Step 1: Post Filtering
+
+All posts in the test data are evaluated, and submissions must include one entry for every post.
+
+Unlike Task 1, there is **no evidence-based filtering**.
 
 ---
 
@@ -786,29 +864,48 @@ A local validation script `validate_submission.py` is provided.
 
 It requires only Python 3.
 
-It checks:
+---
 
-* **Privacy** — warns if post text fields are present
-* **Task 1**
+## What it checks
 
-  * required fields
-  * at least one valence present
-  * Presence in range 1–5
-  * valid element keys
-  * valid subelement ranges
-  * no duplicate entries
-* **Task 2**
+It checks both **file format and submission completeness**:
 
-  * required fields
-  * valid Switch values
-  * valid Escalation values
-  * no duplicate entries
-* **Coverage** (optional with `--test-dir`)
+### Privacy
 
-  * every test post covered
-  * no extra posts included
+* warns if post text fields are present
 
-### Usage
+---
+
+### Task 1 checks
+
+* required fields
+* at least one valence present
+* Presence in range 1–5
+* valid element keys
+* valid subelement ranges
+* no duplicate entries
+
+---
+
+### Task 2 checks
+
+* required fields
+* valid Switch values
+* valid Escalation values
+* no duplicate entries
+
+---
+
+### Coverage checks (optional with `--test-dir`)
+
+* every test post covered
+* no extra posts included
+* Task 2 contains **one entry for every post**
+* Task 1 may omit posts without gold evidence
+
+---
+
+## Usage
 
 ```bash
 # Format checks only
@@ -818,7 +915,7 @@ python validate_submission.py --task1 task1_pred.json --task2 task2_pred.json
 python validate_submission.py --task1 task1_pred.json --task2 task2_pred.json --test-dir <test_data_dir>
 ```
 
-# 11. Running the Evaluation Locally
+# 11. Running the Evaluation Locally (Updated)
 
 ## Task 1 only
 
@@ -850,9 +947,20 @@ python run_evaluation.py --gold-dir <gold_dir> \
     --output scores.txt --json-output results.json
 ```
 
-`<gold_dir>` should contain gold-standard timeline JSON files, one `*.json` per timeline.
+### Additional note for Codabench submissions
 
-If a prediction file is missing, that task is skipped gracefully.
+For Codabench submission:
+
+* The JSON prediction file must be placed inside a ZIP archive named:
+
+```text
+predictions.zip
+```
+
+* The required filename must be at the root:
+
+  * `task1_pred.json` for Task 1
+  * `task2_pred.json` for Task 2
 
 # 12. scores.txt Key Names
 
