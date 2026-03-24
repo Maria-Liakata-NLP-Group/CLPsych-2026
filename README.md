@@ -970,8 +970,3 @@ flowchart TD
 
     PL3 --> T2R["Task 2 rank = mean of post-level Macro F1 and timeline-level Macro F1"]
     TL4 --> T2R
-
-    %% Final
-    T11R --> FINAL["Final task-specific rankings"]
-    T12R --> FINAL
-    T2R --> FINAL
