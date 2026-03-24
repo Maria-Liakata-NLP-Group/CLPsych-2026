@@ -56,6 +56,7 @@ The shared task consists of:
 * [11. Running the Evaluation Locally](#11-running-the-evaluation-locally)
 * [12. scores.txt Key Names](#12-scorestxt-key-names)
 * [13. Final Summary](#13-final-summary)
+* [14. Evaluation Flow Diagram ](#14-Evaluation-Flow-Diagram)
 
 ## What the flowchart shows
 
