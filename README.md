@@ -828,7 +828,7 @@ All posts from all timelines must be included in a **single flat list**.
     * Escalation only
     * both `"S"` and `"E"`
 
----
+
 
 # 10. Submission Validation Script
 
@@ -836,7 +836,7 @@ A local validation script `validate_submission.py` is provided.
 
 It requires only Python 3.
 
----
+
 
 ## What it checks
 
@@ -846,7 +846,7 @@ It checks both **file format and submission completeness**:
 
 * warns if post text fields are present
 
----
+
 
 ### Task 1 checks
 
