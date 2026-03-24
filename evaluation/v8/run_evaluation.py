@@ -205,7 +205,7 @@ def write_scores_txt(flat, output_path):
 
 def main():
     parser = argparse.ArgumentParser(
-        description="CLPsych 2026 Shared Task Evaluation (v5)",
+        description="CLPsych 2026 Shared Task Evaluation (v8)",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""\
 Examples:

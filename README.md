@@ -339,7 +339,7 @@ Metrics are computed separately for:
 
 Given 5 adaptive pairs:
 
-| Post | Gold | Pred | |Error| | Error² |
+| Post | Gold | Pred | Error  | Error² |
 | ---- | ---- | ---- | ------- | ------ |
 | 1    | 3    | 3    | 0       | 0      |
 | 2    | 4    | 2    | 2       | 4      |
