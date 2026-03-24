@@ -675,7 +675,6 @@ All dependencies are pre-installed. No additional `pip install` is required.
 | C-S     | 1 | 1=Self-criticism                                                                                                                                                              |
 | D       | 3 | 1=Relatedness unmet, 2=Autonomy unmet, 3=Competence unmet                                                                                                                     |
 
-Here is the **fully updated, clean, and merged version** of the relevant sections with all fixes applied consistently.
 
 
 
