@@ -103,96 +103,153 @@ Each element x valence has a fixed set of valid subelement indices. Participants
 
 ## 4. Submission Format
 
-Participants submit **separate JSON files** for Task 1 and Task 2. Each file is a JSON array of per-post prediction objects.
+Participants submit **separate ZIP files** for Task 1 and Task 2 on their respective Codabench pages.
 
-**Important — Privacy:** Do NOT include post text (e.g., `"post"`, `"text"`, `"body"`) in your submission files. Remove all post text fields before uploading. The validation script will warn you if text fields are detected.
 
-**Note:** Participants may submit predictions for one or both tasks. If a prediction file for a task is not provided, that task will be skipped and only the other task will be scored.
 
-### Task 1 Submission (`task1_pred.json`)
+## Required archive structure
 
-A JSON array. Each entry is one post with predicted self-states:
+### Task 1 submission
+
+```text
+predictions.zip
+|- task1_pred.json
+```
+
+### Task 2 submission
+
+```text
+predictions.zip
+|- task2_pred.json
+```
+
+
+
+## Important — Privacy
+
+Do **not** include post text fields such as:
+
+* `post`
+* `text`
+* `body`
+
+These must be removed before submission.
+
+
+
+## Note
+
+Participants may submit predictions for one or both tasks.
+If a prediction file for a task is not provided, that task will be skipped and only the other task will be scored.
+
+
+
+## Task 1 Submission (`task1_pred.json`)
+
+A JSON array. Each entry corresponds to one post with predicted self-states.
 
 ```json
 [
   {
-    "timeline_id": "d0fb4b962e",
-    "post_id": "5bf43c51a7",
+    "timeline_id": "91b6a42835",
+    "post_id": "28641e5b6d",
     "adaptive-state": {
-      "A": {"subelement": 3},
-      "B-O": {"subelement": 1},
-      "D": {"subelement": 1},
-      "Presence": 3
+      "Presence": 5,
+      "B-S": { "subelement": 1 },
+      "B-O": { "subelement": 1 },
+      "C-S": { "subelement": 1 },
+      "D": { "subelement": 3 }
     },
     "maladaptive-state": {
-      "C-S": {"subelement": 1},
-      "Presence": 2
+      "Presence": 2,
+      "C-S": { "subelement": 2 }
     }
   },
   {
-    "timeline_id": "d0fb4b962e",
-    "post_id": "a1b2c3d4e5",
+    "timeline_id": "306d938d4b",
+    "post_id": "308b0c2c6c",
     "adaptive-state": {
-      "Presence": 1
+      "Presence": 2,
+      "B-S": { "subelement": 1 },
+      "B-O": { "subelement": 1 }
     },
     "maladaptive-state": {
-      "A": {"subelement": 2},
-      "B-S": {"subelement": 1},
-      "C-O": {"subelement": 1},
-      "Presence": 4
+      "Presence": 2,
+      "A": { "subelement": 2 }
     }
   }
 ]
 ```
 
-**Field constraints:**
 
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| `timeline_id` | string | Yes | Must match a timeline in the test data |
-| `post_id` | string | Yes | Must match a post in the test data |
-| `adaptive-state` | object | No | Omit entirely if no adaptive state predicted |
-| `maladaptive-state` | object | No | Omit entirely if no maladaptive state predicted |
-| `{state}.Presence` | integer (1-5) | Yes, if state is present | Psychological centrality rating |
-| `{state}.{element}` | object | No | Include only elements predicted as present |
-| `{state}.{element}.subelement` | integer | Yes, if element is present | Must be a valid index for this element x valence (see schema above) |
+### Field constraints
 
-- **Elements**: `A`, `B-O`, `B-S`, `C-O`, `C-S`, `D`
-- Exactly one subelement per element per valence.
-- Only include entries for posts that have annotated evidence in the gold data. Posts without gold evidence are ignored during evaluation.
+| Field                          | Type          | Required                   | Description                                      |
+| ------------------------------ | ------------- | -------------------------- | ------------------------------------------------ |
+| `timeline_id`                  | string        | Yes                        | Must match a timeline in the test data           |
+| `post_id`                      | string        | Yes                        | Must match a post in the test data               |
+| `adaptive-state`               | object        | No                         | Omit entirely if no adaptive state predicted     |
+| `maladaptive-state`            | object        | No                         | Omit entirely if no maladaptive state predicted  |
+| `{state}.Presence`             | integer (1–5) | Yes, if state is present   | Psychological centrality rating                  |
+| `{state}.{element}`            | object        | No                         | Omitted elements will be scored as not present   |
+| `{state}.{element}.subelement` | integer       | Yes, if element is present | Must be a valid index for this element × valence |
 
-### Task 2 Submission (`task2_pred.json`)
 
-A JSON array. Each entry is one post with Switch and Escalation labels:
+### Additional rules
+
+* **Elements**: `A`, `B-O`, `B-S`, `C-O`, `C-S`, `D`
+* Exactly **one subelement per element per valence**
+* Include **only elements predicted as present**
+* Only include entries for posts that have annotated evidence in the gold data
+  → Posts without gold evidence are **ignored during evaluation**
+
+## Task 2 Submission (`task2_pred.json`)
+
+A JSON array. Each entry corresponds to one post with Switch and Escalation labels.
+
+All posts from all timelines must be included in a **single flat list**.
 
 ```json
 [
   {
-    "timeline_id": "d0fb4b962e",
-    "post_id": "5bf43c51a7",
+    "timeline_id": "3db8573df5",
+    "post_id": "e383f54895",
     "Switch": "0",
     "Escalation": "0"
   },
   {
-    "timeline_id": "d0fb4b962e",
-    "post_id": "a1b2c3d4e5",
+    "timeline_id": "3db8573df5",
+    "post_id": "77cbbd5cc2",
     "Switch": "S",
     "Escalation": "E"
   }
 ]
 ```
 
-**Field constraints:**
 
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| `timeline_id` | string | Yes | Must match a timeline in the test data |
-| `post_id` | string | Yes | Must match a post in the test data |
-| `Switch` | string | Yes | `"S"` for switch, `"0"` for no switch |
-| `Escalation` | string | Yes | `"E"` for escalation, `"0"` for no escalation |
+### Field constraints
 
-- Must include an entry for **every** post in the test data.
-- Switch and Escalation are independent — a post can be labeled as both `"S"` and `"E"`.
+| Field         | Type   | Required | Description                                   |
+| ------------- | ------ | -------- | --------------------------------------------- |
+| `timeline_id` | string | Yes      | Must match a timeline in the test data        |
+| `post_id`     | string | Yes      | Must match a post in the test data            |
+| `Switch`      | string | Yes      | `"S"` for switch, `"0"` for no switch         |
+| `Escalation`  | string | Yes      | `"E"` for escalation, `"0"` for no escalation |
+
+
+### Additional rules
+
+* Must include **one entry for every post in the test data**
+* All timelines must be merged into a **single JSON array**
+* No grouping or nesting by timeline
+* Switch and Escalation are **independent labels**
+
+  * A post may be:
+
+    * neither
+    * Switch only
+    * Escalation only
+    * both `"S"` and `"E"`
 
 ---
 
