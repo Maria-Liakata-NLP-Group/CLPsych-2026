@@ -921,3 +921,57 @@ Task 2   → binary detection:
 ```
 
 Each task has its own ranking metric.
+
+# 14. Evaluation Flow Diagram
+
+```mermaid
+flowchart TD
+    A[All posts in dataset]
+
+    %% Task 1
+    A --> T1F[Task 1: Filter to posts with at least one valid gold Presence]
+    T1F --> T1V[Per-valence filtering: adaptive and maladaptive checked independently]
+
+    T1V --> EP[Task 1.1 Element Presence]
+    T1V --> SC[Task 1.1 Subelement Classification]
+    T1V --> PR[Task 1.2 Presence Rating]
+
+    EP --> EP1[Binary evaluation for 6 elements: A, B-O, B-S, C-O, C-S, D]
+    EP1 --> EP2[Per-element Precision / Recall / F1]
+    EP2 --> EP3[Per-valence Macro F1 / Micro F1]
+    EP3 --> EP4[Overall Element Presence metrics]
+
+    SC --> SC1[Multi-class evaluation per element]
+    SC1 --> SC2[Class 0 = absent excluded from scoring]
+    SC2 --> SC3[Per-element Macro F1 / Micro F1]
+    SC3 --> SC4[Per-valence and overall subelement metrics]
+    SC4 --> T11R[Task 1.1 Rank = Avg Macro F1 of subelement classification]
+
+    PR --> PR1[Collect gold/pred Presence pairs for valid valences]
+    PR1 --> PR2[Default pred Presence = 1 if missing]
+    PR2 --> PR3[Compute MAE / RMSE / QWK / Spearman]
+    PR3 --> T12R[Task 1.2 Rank = mean(adaptive RMSE, maladaptive RMSE)]
+
+    %% Task 2
+    A --> T2A[Task 2: Use all posts, no evidence filtering]
+    T2A --> T2P[Parse Switch and Escalation into binary labels]
+
+    T2P --> PL[Post-level evaluation]
+    T2P --> TL[Timeline-level evaluation]
+
+    PL --> PL1[Pool all posts]
+    PL1 --> PL2[Compute Precision / Recall / F1 for Switch and Escalation]
+    PL2 --> PL3[Post-level Macro F1]
+
+    TL --> TL1[Group posts by timeline_id]
+    TL1 --> TL2[Compute per-timeline Precision / Recall / F1]
+    TL2 --> TL3[Macro-average across timelines]
+    TL3 --> TL4[Timeline-level Macro F1]
+
+    PL3 --> T2R[Task 2 Rank = mean(Post-level Macro F1, Timeline-level Macro F1)]
+    TL4 --> T2R
+
+    %% Final
+    T11R --> FINAL[Final task-specific rankings]
+    T12R --> FINAL
+    T2R --> FINAL
