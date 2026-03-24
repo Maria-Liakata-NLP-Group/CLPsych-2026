@@ -677,13 +677,13 @@ All dependencies are pre-installed. No additional `pip install` is required.
 
 Here is the **fully updated, clean, and merged version** of the relevant sections with all fixes applied consistently.
 
----
+
 
 # 9. Submission Format
 
 Participants submit **separate ZIP files** for Task 1 and Task 2 on their respective Codabench pages.
 
----
+
 
 ## Required archive structure
 
@@ -701,7 +701,7 @@ predictions.zip
 |- task2_pred.json
 ```
 
----
+
 
 ## Important — Privacy
 
@@ -713,14 +713,14 @@ Do **not** include post text fields such as:
 
 These must be removed before submission.
 
----
+
 
 ## Note
 
 Participants may submit predictions for one or both tasks.
 If a prediction file for a task is not provided, that task will be skipped and only the other task will be scored.
 
----
+
 
 ## Task 1 Submission (`task1_pred.json`)
 
@@ -759,7 +759,6 @@ A JSON array. Each entry corresponds to one post with predicted self-states.
 ]
 ```
 
----
 
 ### Field constraints
 
@@ -773,7 +772,6 @@ A JSON array. Each entry corresponds to one post with predicted self-states.
 | `{state}.{element}`            | object        | No                         | Omitted elements will be scored as not present   |
 | `{state}.{element}.subelement` | integer       | Yes, if element is present | Must be a valid index for this element × valence |
 
----
 
 ### Additional rules
 
@@ -782,8 +780,6 @@ A JSON array. Each entry corresponds to one post with predicted self-states.
 * Include **only elements predicted as present**
 * Only include entries for posts that have annotated evidence in the gold data
   → Posts without gold evidence are **ignored during evaluation**
-
----
 
 ## Task 2 Submission (`task2_pred.json`)
 
@@ -808,7 +804,6 @@ All posts from all timelines must be included in a **single flat list**.
 ]
 ```
 
----
 
 ### Field constraints
 
@@ -819,7 +814,6 @@ All posts from all timelines must be included in a **single flat list**.
 | `Switch`      | string | Yes      | `"S"` for switch, `"0"` for no switch         |
 | `Escalation`  | string | Yes      | `"E"` for escalation, `"0"` for no escalation |
 
----
 
 ### Additional rules
 
@@ -834,27 +828,6 @@ All posts from all timelines must be included in a **single flat list**.
     * Switch only
     * Escalation only
     * both `"S"` and `"E"`
-
----
-
-# 4. Task 2 Evaluation Logic (Updated Sections)
-
-## Overview
-
-Task 2 evaluates **Moments of Change** detection.
-
-Each post in the test data must receive two independent labels:
-
-* **Switch**
-* **Escalation**
-
----
-
-## Step 1: Post Filtering
-
-All posts in the test data are evaluated, and submissions must include one entry for every post.
-
-Unlike Task 1, there is **no evidence-based filtering**.
 
 ---
 
