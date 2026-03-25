@@ -73,31 +73,29 @@ All dependencies are pre-installed in the Docker image. No additional `pip insta
 
 ---
 
-## 3. Subelement Schema
+# 8. Subelement Schema
 
-Each element x valence has a fixed set of valid subelement indices. Participants predict exactly one subelement per element present.
+## Adaptive State
 
-### Adaptive State
+| Element | # | Subelements                                                                                                                                                                                                  |
+| ------- | - | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| A       | 7 | 1=Calm / laid back, 3=Sad / emotional pain / grieving, 5=Content / happy / joy / hopeful, 7=Vigor / energetic, 9=Justifiable anger / assertive anger / justifiable outrage, 11=Proud, 13=Feel loved / belong |
+| B-O     | 2 | 1=Relating behavior, 3=Autonomous or adaptive control behavior                                                                                                                                               |
+| B-S     | 1 | 1=Self care and improvement                                                                                                                                                                                  |
+| C-O     | 2 | 1=Perception of the other as related, 3=Perception of the other as facilitating autonomy needs                                                                                                               |
+| C-S     | 1 | 1=Self-acceptance and compassion                                                                                                                                                                             |
+| D       | 3 | 1=Relatedness, 3=Autonomy and adaptive control, 5=Competence / self esteem / self-care                                                                                                                       |
 
-| Element | # | Subelements |
-|---------|---|-------------|
-| A | 7 | 1=Calm (laid back), 2=Sad (emotional pain, grieving), 3=Happy (content, joyful, hopeful), 4=Vigor (energy), 5=Justifiably angry (assertive anger), 6=Proud, 7=Feeling loved |
-| B-O | 2 | 1=Relating behavior, 2=Autonomous behavior |
-| B-S | 1 | 1=Self-care |
-| C-O | 2 | 1=Related, 2=Facilitating autonomy |
-| C-S | 1 | 1=Self-acceptance |
-| D | 3 | 1=Relatedness, 2=Autonomy, 3=Competence |
+## Maladaptive State
 
-### Maladaptive State
-
-| Element | # | Subelements |
-|---------|---|-------------|
-| A | 7 | 1=Anxious (fearful, tense), 2=Depressed (despair, hopeless), 3=Mania, 4=Apathetic (blunted affect), 5=Angry (aggression, disgust, contempt), 6=Ashamed (guilty), 7=Loneliness |
-| B-O | 2 | 1=Fight or flight, 2=Overcontrolled |
-| B-S | 1 | 1=Self-harm |
-| C-O | 2 | 1=Detached or over-attached, 2=Blocking autonomy |
-| C-S | 1 | 1=Self-criticism |
-| D | 3 | 1=Relatedness unmet, 2=Autonomy unmet, 3=Competence unmet |
+| Element | # | Subelements                                                                                                                                                                               |
+| ------- | - | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| A       | 7 | 2=Anxious / fearful / tense, 4=Depressed / despair / hopeless, 6=Mania, 8=Apathic / don’t care / blunted, 10=Angry / aggression / disgust / contempt, 12=Ashamed / guilty, 14=Feel lonely |
+| B-O     | 2 | 2=Fight or flight behavior, 4=Over controlled or controlling behavior                                                                                                                     |
+| B-S     | 1 | 2=Self harm, neglect and avoidance                                                                                                                                                        |
+| C-O     | 2 | 2=Perception of the other as detached or over attached, 4=Perception of the other as blocking autonomy needs                                                                              |
+| C-S     | 1 | 2=Self criticism                                                                                                                                                                          |
+| D       | 3 | 2=Expectation that relatedness needs will not be met, 4=Expectation that autonomy needs will not be met, 6=Expectation that competence needs will not be met                              |
 
 ---
 
