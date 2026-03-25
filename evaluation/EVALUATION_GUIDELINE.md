@@ -79,23 +79,24 @@ All dependencies are pre-installed in the Docker image. No additional `pip insta
 
 | Element | # | Subelements                                                                                                                                                                                                  |
 | ------- | - | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| A       | 7 | 1=Calm / laid back, 3=Sad / emotional pain / grieving, 5=Content / happy / joy / hopeful, 7=Vigor / energetic, 9=Justifiable anger / assertive anger / justifiable outrage, 11=Proud, 13=Feel loved / belong |
-| B-O     | 2 | 1=Relating behavior, 3=Autonomous or adaptive control behavior                                                                                                                                               |
-| B-S     | 1 | 1=Self care and improvement                                                                                                                                                                                  |
-| C-O     | 2 | 1=Perception of the other as related, 3=Perception of the other as facilitating autonomy needs                                                                                                               |
-| C-S     | 1 | 1=Self-acceptance and compassion                                                                                                                                                                             |
-| D       | 3 | 1=Relatedness, 3=Autonomy and adaptive control, 5=Competence / self esteem / self-care                                                                                                                       |
+| A       | 7 | 1= Calm/ laid back, 3= Sad, Emotional pain, grieving, 5= Content, happy, joy, hopeful, 7= Vigor / energetic, 9= Justifiable anger/ assertive anger, justifiable outrage, 11= Proud, 13= Feel loved, belong |
+| B-O     | 2 | 1= Relating behavior, 3= Autonomous or adaptive control behavior     |
+| B-S     | 1 | 1= Self care and improvement    |
+| C-O     | 2 | 1= Perception of the other as related, 3= Perception of the other as facilitating autonomy needs  |
+| C-S     | 1 | 1= Self-acceptance and compassion  |
+| D       | 3 | 1= Relatedness, 3= Autonomy and adaptive control, 5= Competence, self esteem, self-care  |
 
 ## Maladaptive State
 
 | Element | # | Subelements                                                                                                                                                                               |
 | ------- | - | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| A       | 7 | 2=Anxious / fearful / tense, 4=Depressed / despair / hopeless, 6=Mania, 8=Apathic / don’t care / blunted, 10=Angry / aggression / disgust / contempt, 12=Ashamed / guilty, 14=Feel lonely |
-| B-O     | 2 | 2=Fight or flight behavior, 4=Over controlled or controlling behavior                                                                                                                     |
-| B-S     | 1 | 2=Self harm, neglect and avoidance                                                                                                                                                        |
-| C-O     | 2 | 2=Perception of the other as detached or over attached, 4=Perception of the other as blocking autonomy needs                                                                              |
-| C-S     | 1 | 2=Self criticism                                                                                                                                                                          |
-| D       | 3 | 2=Expectation that relatedness needs will not be met, 4=Expectation that autonomy needs will not be met, 6=Expectation that competence needs will not be met                              |
+| A       | 7 | 2= Anxious/ fearful/ tense, 4= Depressed, despair, hopeless, 6= Mania, 8= Apathic, don’t care, blunted, 10= Angry (aggression), disgust, contempt, 12= Ashamed, guilty, 14=Feel lonely |
+| B-O     | 2 | 2= Fight or flight behavior, 4= Over controlled or controlling behavior   |
+| B-S     | 1 | 2= Self harm, neglect and avoidance  |
+| C-O     | 2 | 2= Perception of the other as detached or over attached, 4= Perception of the other as blocking autonomy needs    |
+| C-S     | 1 | 2= Self criticism |
+| D       | 3 | 2= Expectation that relatedness needs will not be met, 4= Expectation that autonomy needs will not be met, 6= Expectation that competence needs will not be met  |
+
 
 ---
 
