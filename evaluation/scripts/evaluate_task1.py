@@ -1,10 +1,4 @@
-"""Evaluation for Task 1.1 (ABCD subelement classification) and Task 1.2 (presence rating).
-
-v4 changes from v3:
-- Task 1.1 element presence: per-valence macro/micro F1 + average
-- Task 1.1 subelement: replaced per-element accuracy with subelement presence F1
-  (each subelement slot is a binary classification, evaluated like element presence)
-"""
+"""Evaluation for Task 1.1 (ABCD subelement classification) and Task 1.2 (presence rating)."""
 
 import argparse
 import json
@@ -31,6 +25,7 @@ from utils import (
     SUBELEMENT_SCHEMA,
     VALENCES,
     build_pred_lookup,
+    convert_gold_category_to_v2,
     get_gold_subelement,
     get_presence,
     get_subelement,
@@ -74,6 +69,14 @@ def evaluate_task1_1(gold, pred_lookup, matched_keys):
             for elem in ELEMENTS:
                 g_sub = get_gold_subelement(gstate, elem, valence)
                 p_sub = get_subelement(pstate, elem)
+
+                # Convert prediction from global (Table 1) numbering to v2
+                if p_sub is not None:
+                    p_sub = convert_gold_category_to_v2(
+                        valence, elem, "(%d)" % p_sub)
+                    # If mapping fails (invalid ID), treat as absent
+                    if p_sub is None:
+                        p_has = False
 
                 g_has = g_sub is not None
                 p_has = p_sub is not None
