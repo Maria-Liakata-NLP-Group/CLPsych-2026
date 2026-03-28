@@ -1,8 +1,4 @@
-"""Evaluation for Task 2 — Moments of Change (Switch & Escalation).
-
-v4 changes from v3:
-- Added combined_macro_f1: average of post-level and timeline-level macro F1 (for ranking)
-"""
+"""Evaluation for Task 2 — Moments of Change (Switch & Escalation)."""
 
 import argparse
 import json
