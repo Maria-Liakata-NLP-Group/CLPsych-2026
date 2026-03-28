@@ -1,7 +1,4 @@
-"""Validate submission files for CLPsych 2026 Shared Task (v3 format).
-
-v3 changes from v2:
-- Warns if submission entries contain post text (privacy check)
+"""Validate submission files for CLPsych 2026 Shared Task.
 
 Usage:
   python validate_submission.py --task1 task1_pred.json --task2 task2_pred.json --test-dir <test_dir>
@@ -9,7 +6,6 @@ Usage:
 
 import argparse
 import json
-import os
 import sys
 from pathlib import Path
 
@@ -19,8 +15,7 @@ PRESENCE_RANGE = range(1, 6)
 SWITCH_VALUES = {"0", "S"}
 ESCALATION_VALUES = {"0", "E"}
 
-# Valid subelement indices per element x valence
-# Subelements use a shared numbering scheme across both valences
+# Valid subelement indices per element x valence (global numbering from Table 1)
 VALID_SUBELEMENTS = {
     "adaptive-state": {
         "A": {1, 3, 5, 7, 9, 11, 13},
@@ -239,18 +234,11 @@ def main():
         print("=" * 50)
         print("Validating Task 1 submission...")
         print("=" * 50)
-        
-        name_err = (os.path.basename(args.task1) != "task1_pred.json")
-        if name_err:
-            print("FAILED: filename should be 'task1_pred.json' for Task 1 submission")
-            all_valid = False
-
         data, load_err = load_json(args.task1)
         if load_err:
             print("FAILED: %s" % load_err)
             all_valid = False
-            
-        if not name_err and not load_err:
+        else:
             text_warnings = check_post_text(data, "Task 1")
             if text_warnings:
                 for w in text_warnings:
@@ -272,18 +260,11 @@ def main():
         print("=" * 50)
         print("Validating Task 2 submission...")
         print("=" * 50)
-
-        name_err = (os.path.basename(args.task2) != "task2_pred.json")
-        if name_err:
-            print("FAILED: filename should be 'task2_pred.json' for Task 2 submission")
-            all_valid = False
-
         data, load_err = load_json(args.task2)
         if load_err:
             print("FAILED: %s" % load_err)
             all_valid = False
-        
-        if not name_err and not load_err:
+        else:
             text_warnings = check_post_text(data, "Task 2")
             if text_warnings:
                 for w in text_warnings:
