@@ -1,10 +1,4 @@
-"""Shared utilities for CLPsych 2026 evaluation scripts (v2).
-
-Key changes from v1:
-- Subelement schema: each element x valence has a numbered list of valid subelements
-- Gold data conversion: maps old "(N) description" Category format to v2 index lists
-- Submission format uses "subelement": int instead of "Category": "string"
-"""
+"""Shared utilities for CLPsych 2026 evaluation scripts."""
 
 import json
 import re
