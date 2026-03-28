@@ -1,16 +1,4 @@
-"""Entry point to run evaluation for all CLPsych 2026 tasks (v8).
-
-v7 changes from v6:
-- Task 1.1 ranking simplified: t1_1_rank = subelement classification Avg Macro F1
-  (previously averaged element presence and subelement classification)
-
-v6 changes from v5:
-- Added 3 ranking keys: t1_1_rank, t1_2_rank, t2_rank
-
-v5 changes from v4:
-- Output format: scores.txt (Codabench format) instead of JSON
-- All metric key names shortened to <=36 characters
-- Key naming convention: t1ep/t1sc/t1pr/t2pl/t2tl prefixes with abbreviations
+"""Entry point to run evaluation for all CLPsych 2026 tasks.
 
 Key name abbreviations:
     t1 = Task 1, t2 = Task 2
@@ -205,7 +193,7 @@ def write_scores_txt(flat, output_path):
 
 def main():
     parser = argparse.ArgumentParser(
-        description="CLPsych 2026 Shared Task Evaluation (v8)",
+        description="CLPsych 2026 Shared Task Evaluation (v5)",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""\
 Examples:
