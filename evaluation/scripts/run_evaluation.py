@@ -9,7 +9,6 @@ Key name abbreviations:
     prec = precision, rec = recall, sup = support
     sw = Switch, esc = Escalation
 """
-
 import argparse
 import json
 import os
