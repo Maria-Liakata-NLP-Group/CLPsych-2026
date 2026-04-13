@@ -1,4 +1,4 @@
-# CLPsych 2026 Shared Task — Evaluation Guideline (v9)
+# CLPsych 2026 Shared Task — Evaluation Guideline (v9, Task 3.1 CS-fixed)
 
 ## 1. Evaluation Metrics
 
@@ -99,10 +99,21 @@ Task 2 Ranking = mean(Post-level Macro F1, Timeline-level Macro F1)
 
 Task 3.1 evaluates **Sequence Summary** quality using four complementary metrics:
 
-* **CS (Contradiction Score)** — NLI contradiction mean; lower is better
+* **CS (Consistency Score)** — NLI consistency (`1 − mean contradiction`); higher is better
 * **CT (Contradiction Top)** — NLI contradiction max; lower is better
 * **ROUGE-L Recall** — lexical/temporal coverage; higher is better
 * **BERTScore Recall** — semantic coverage; higher is better
+
+#### v2 change: CS definition fix
+
+In earlier wording, CS was described as raw contradiction mean.
+This is corrected here to match the CLPsych 2025 definition and implementation:
+
+```text
+CS = 1 − mean contradiction
+```
+
+That is, CS is a **consistency** score, so **higher is better**.
 
 #### Prediction truncation (350 words)
 
@@ -114,7 +125,7 @@ Before scoring, each predicted summary is truncated to the first **350 words**. 
 
 #### CS and CT
 
-These are unchanged from CLPsych 2025 Task B.
+These follow CLPsych 2025 Task B.
 
 * Model: `MoritzLaurer/DeBERTa-v3-large-mnli-fever-anli-ling-wanli`
 * Direction: **gold = premise**, **prediction = hypothesis**
@@ -124,6 +135,7 @@ For each predicted sentence:
 
 1. compute contradiction probability against each gold sentence
 2. take the **mean** contradiction probability across gold sentences
+3. convert to consistency as `1 − mean contradiction`
 
 Then average over predicted sentences.
 
@@ -168,17 +180,17 @@ This measures whether the semantic content of each gold sentence is covered some
 
 #### Edge cases
 
-| Condition              | CS / CT         | ROUGE-L         | BERTScore       |
-| ---------------------- | --------------- | --------------- | --------------- |
-| Empty prediction       | 1.0 / 1.0       | 0.0             | 0.0             |
-| Empty gold             | 0.0 / 0.0       | 0.0             | 0.0             |
-| Prediction > 350 words | Truncated first | Truncated first | Truncated first |
+| Condition              | CS              | CT              | ROUGE-L         | BERTScore       |
+| ---------------------- | --------------- | --------------- | --------------- | --------------- |
+| Empty prediction       | 0.0             | 1.0             | 0.0             | 0.0             |
+| Empty gold             | 1.0             | 0.0             | 0.0             | 0.0             |
+| Prediction > 350 words | Truncated first | Truncated first | Truncated first | Truncated first |
 
 ```text
 Task 3.1 Ranking = t3_cs
 ```
 
-Lower is better.
+Higher is better.
 
 ---
 
@@ -590,13 +602,13 @@ one metric per line.
 
 | Key                   | Description                     | Direction       |
 | --------------------- | ------------------------------- | --------------- |
-| `t3_cs`               | Mean CS                         | Lower = better  |
+| `t3_cs`               | Mean CS (consistency)           | Higher = better |
 | `t3_ct`               | Mean CT                         | Lower = better  |
 | `t3_rouge_l_recall`   | Mean ROUGE-L Recall             | Higher = better |
 | `t3_bertscore_recall` | Mean BERTScore Recall           | Higher = better |
 | `t3_n_seq`            | Number of sequences             | —               |
 | `t3_n_trunc`          | Number of truncated predictions | —               |
-| `t3_rank`             | `t3_cs`                         | Lower = better  |
+| `t3_rank`             | `t3_cs`                         | Higher = better |
 
 See `SCORES_KEY.md` for the complete key reference.
 
@@ -624,5 +636,4 @@ See `SCORES_KEY.md` for the complete key reference.
 | B-S     | 1 | 2 = Self-harm, neglect, and avoidance                                                                                                                                                                   |
 | C-O     | 2 | 2 = Perception of the other as detached or over-attached, 4 = Perception of the other as blocking autonomy needs                                                                                        |
 | C-S     | 1 | 2 = Self-criticism                                                                                                                                                                                      |
-| D       | 3 | 2 = Expectation that relatedness needs will not be met, 4 = Expectation that autonomy needs will not be met, 6 = Expectation that competence needs will not be met                                      |
-
+| D       | 3 | 2 = Expectation that relatedness needs will not be met, 4 = Expectation that autonomy needs will not be met, 6 = Expectation that competence needs will not be met                                      
