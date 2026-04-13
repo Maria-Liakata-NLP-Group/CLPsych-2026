@@ -54,12 +54,13 @@ The shared task consists of:
 * [5. Task 3.1 Evaluation Logic](#5-task-31-evaluation-logic)
 
   * [Overview](#overview-3)
+  * [v2 Change: CS Direction Fix](#v2-change-cs-direction-fix)
   * [Prediction Truncation (350 words)](#prediction-truncation-350-words)
-  * [CS and CT (NLI Contradiction)](#cs-and-ct-nli-contradiction)
+  * [CS and CT (NLI)](#cs-and-ct-nli)
   * [ROUGE-L Recall](#rouge-l-recall)
   * [BERTScore Recall](#bertscore-recall)
   * [Edge Cases](#edge-cases)
-  * [Codabench scores.txt Keys](#codabench-scorestxt-keys)
+  * [Codabench scorestxt Keys](#codabench-scorestxt-keys)
   * [Task 3.1 Ranking](#task-31-ranking)
   * [Task 3.1 Pipeline Summary](#task-31-pipeline-summary)
 * [6. Task 3.2 Evaluation Logic](#6-task-32-evaluation-logic)
@@ -99,7 +100,7 @@ The shared task consists of:
 * **Task 3.1** uses **sequence summaries**
 
   * Truncates predictions to 350 words
-  * Computes contradiction, lexical recall, and semantic recall
+  * Computes consistency, contradiction, lexical recall, and semantic recall
 * **Task 3.2** uses **submitted signatures plus supporting sequences**
 
   * Human judges evaluate evidence fit, recurrence, and specificity
@@ -129,6 +130,7 @@ The diagram also captures the conceptual relationship between the tasks:
 * **Task 3.1** focuses on:
 
   * Summary quality over full sequences
+  * Consistency maximization
   * Contradiction minimization
   * Lexical and semantic content coverage
 * **Task 3.2** focuses on:
@@ -175,7 +177,7 @@ A post may have:
 
 Each sequence receives a generated summary that is compared against a gold summary using four complementary metrics:
 
-* **CS** — contradiction score
+* **CS** — consistency score
 * **CT** — contradiction top score
 * **ROUGE-L Recall** — lexical temporal coverage
 * **BERTScore Recall** — semantic coverage
@@ -287,7 +289,7 @@ where `K` is the number of valid subelements for that element.
 ### Important scoring rule
 
 F1 is computed **only over positive classes**.
-Class `0` (absent) is excluded because absence is already handled in element presence evaluation.
+Class `0` (absent) is excluded from scoring because absence is already handled in element presence evaluation.
 
 This means:
 
@@ -617,12 +619,30 @@ All posts (no filtering)
 
 Task 3.1 evaluates **Sequence Summary** quality using four complementary metrics:
 
-| Metric                       | What it measures               | Direction       | Source              |
-| ---------------------------- | ------------------------------ | --------------- | ------------------- |
-| **CS** (Contradiction Score) | NLI contradiction (mean)       | Lower = better  | CLPsych 2025 Task B |
-| **CT** (Contradiction Top)   | NLI contradiction (max)        | Lower = better  | CLPsych 2025 Task B |
-| **ROUGE-L Recall**           | Temporal/dynamic word coverage | Higher = better | New                 |
-| **BERTScore Recall**         | Semantic content coverage      | Higher = better | CLPsych 2025 Task A |
+| Metric                     | What it measures                         | Direction       | Source              |
+| -------------------------- | ---------------------------------------- | --------------- | ------------------- |
+| **CS** (Consistency Score) | NLI consistency (1 − mean contradiction) | Higher = better | CLPsych 2025 Task B |
+| **CT** (Contradiction Top) | NLI contradiction (max)                  | Lower = better  | CLPsych 2025 Task B |
+| **ROUGE-L Recall**         | Temporal/dynamic word coverage           | Higher = better | New                 |
+| **BERTScore Recall**       | Semantic content coverage                | Higher = better | CLPsych 2025 Task A |
+
+## v2 Change: CS Direction Fix
+
+In v1, CS was computed as raw mean contradiction probability (lower = better).
+This was inconsistent with the CLPsych 2025 paper and codebase, which define
+CS as **consistency = 1 − mean contradiction** (higher = better).
+
+v2 applies the `1 −` transformation to match the published definition:
+
+```text
+CS = 1/(|S||G|) * Σ_s∈S Σ_g∈G (1 − NLI(Contradict|g, s))
+```
+
+Reference: CLPsych 2025 `nli_scorer.py` line:
+
+```text
+mean_consistency = 1 - contradict_scores.mean()
+```
 
 ## Prediction Truncation (350 words)
 
@@ -632,9 +652,7 @@ Before any scoring, predicted summaries are truncated to the first **350 words**
 * supports the use of Recall rather than Precision/F1 metrics
 * is enforced automatically in the evaluation code
 
-## CS and CT (NLI Contradiction)
-
-Unchanged from CLPsych 2025 Task B.
+## CS and CT (NLI)
 
 * Model: `MoritzLaurer/DeBERTa-v3-large-mnli-fever-anli-ling-wanli`
 * Direction: gold = premise, predicted = hypothesis
@@ -645,6 +663,7 @@ For each predicted sentence:
 
 1. compute contradiction probability against each gold sentence
 2. take the **mean** contradiction probability across gold sentences
+3. convert to consistency as `1 − mean contradiction`
 
 Then average over all predicted sentences.
 
@@ -698,23 +717,23 @@ This measures whether the semantic content of each gold sentence is covered some
 
 ## Edge Cases
 
-| Condition              | CS/CT           | ROUGE-L         | BERTScore       |
-| ---------------------- | --------------- | --------------- | --------------- |
-| Empty prediction       | 1.0 / 1.0       | 0.0             | 0.0             |
-| Empty gold             | 0.0 / 0.0       | 0.0             | 0.0             |
-| Prediction > 350 words | Truncated first | Truncated first | Truncated first |
+| Condition              | CS              | CT              | ROUGE-L         | BERTScore       |
+| ---------------------- | --------------- | --------------- | --------------- | --------------- |
+| Empty prediction       | 0.0             | 1.0             | 0.0             | 0.0             |
+| Empty gold             | 1.0             | 0.0             | 0.0             | 0.0             |
+| Prediction > 350 words | Truncated first | Truncated first | Truncated first | Truncated first |
 
 ## Codabench scores.txt Keys
 
 | Key                   | Description           | Direction       |
 | --------------------- | --------------------- | --------------- |
-| `t3_cs`               | Mean CS               | Lower = better  |
+| `t3_cs`               | Mean CS (consistency) | Higher = better |
 | `t3_ct`               | Mean CT               | Lower = better  |
 | `t3_rouge_l_recall`   | Mean ROUGE-L Recall   | Higher = better |
 | `t3_bertscore_recall` | Mean BERTScore Recall | Higher = better |
 | `t3_n_seq`            | Number of sequences   | —               |
 | `t3_n_trunc`          | Predictions truncated | —               |
-| `t3_rank`             | = t3_cs               | Lower = better  |
+| `t3_rank`             | = t3_cs               | Higher = better |
 
 ## Task 3.1 Ranking
 
@@ -722,7 +741,7 @@ This measures whether the semantic content of each gold sentence is covered some
 Task 3.1 Ranking = t3_cs
 ```
 
-Lower is better.
+Higher is better.
 
 ## Task 3.1 Pipeline Summary
 
@@ -731,7 +750,7 @@ Predicted summary
   |-- Truncate to 350 words
   |-- Sentence tokenize (NLTK)
   |
-  |-- CS/CT: NLI contradiction (DeBERTa-v3-large)
+  |-- CS/CT: NLI (DeBERTa-v3-large) — CS = 1 − mean contradiction
   |-- ROUGE-L Recall: LCS(gold, pred) / len(gold)
   +-- BERTScore Recall: per-gold-sentence max BERTScore F1 (DeBERTa-xlarge)
 ```
@@ -941,7 +960,7 @@ Ranking = mean(Post-level Macro F1, Timeline-level Macro F1)
 
 Reported:
 
-* **CS**
+* **CS** (consistency; higher is better)
 * **CT**
 * **ROUGE-L Recall**
 * **BERTScore Recall**
@@ -952,7 +971,7 @@ Reported:
 Ranking = t3_cs
 ```
 
-Lower is better.
+Higher is better.
 
 ## Task 3.2 — Dynamic Signature Evaluation
 
@@ -1324,6 +1343,7 @@ Task 2   → binary detection:
             - post-level and timeline-level scoring
 
 Task 3.1 → sequence summary evaluation:
+            - consistency
             - contradiction
             - lexical recall
             - semantic recall
@@ -1389,10 +1409,10 @@ flowchart TD
     A --> T31["Task 3.1: Sequence summaries"]
     T31 --> T31T["Truncate predictions to first 350 words"]
     T31T --> T31S["Sentence tokenize"]
-    T31S --> T31NLI["CS / CT contradiction scoring"]
+    T31S --> T31NLI["CS / CT NLI scoring"]
     T31S --> T31R["ROUGE-L Recall"]
     T31S --> T31B["BERTScore Recall"]
-    T31NLI --> T31Rank["Task 3.1 rank = t3_cs"]
+    T31NLI --> T31Rank["Task 3.1 rank = t3_cs (higher is better)"]
     T31R --> T31Rank
     T31B --> T31Rank
 
