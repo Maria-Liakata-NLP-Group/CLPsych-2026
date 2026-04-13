@@ -7,6 +7,8 @@ The shared task consists of:
 * **Task 1.1** — ABCD Element & Subelement Classification
 * **Task 1.2** — Presence Rating
 * **Task 2** — Moments of Change (Switch & Escalation)
+* **Task 3.1** — Sequence Summary Evaluation
+* **Task 3.2** — Identifying Recurrent Dynamic Signatures of Change Across Timelines
 
 # Table of Contents
 
@@ -17,6 +19,8 @@ The shared task consists of:
   * [Task 1.1 — ABCD Element & Subelement Classification](#task-11--abcd-element--subelement-classification)
   * [Task 1.2 — Presence Rating](#task-12--presence-rating)
   * [Task 2 — Moments of Change](#task-2--moments-of-change)
+  * [Task 3.1 — Sequence Summary Evaluation](#task-31--sequence-summary-evaluation)
+  * [Task 3.2 — Identifying Recurrent Dynamic Signatures of Change Across Timelines](#task-32--identifying-recurrent-dynamic-signatures-of-change-across-timelines)
 * [2. Task 1.1 Evaluation Logic](#2-task-11-evaluation-logic)
 
   * [Overview](#overview)
@@ -47,16 +51,38 @@ The shared task consists of:
   * [Why both post-level and timeline-level?](#why-both-post-level-and-timeline-level)
   * [Task 2 Ranking](#task-2-ranking)
   * [Task 2 Pipeline Summary](#task-2-pipeline-summary)
-* [5. Evaluation Metrics Summary](#5-evaluation-metrics-summary)
-* [6. Post Filtering Rules](#6-post-filtering-rules)
-* [7. Environment](#7-environment)
-* [8. Subelement Schema](#8-subelement-schema)
-* [9. Submission Format](#9-submission-format)
-* [10. Submission Validation Script](#10-submission-validation-script)
-* [11. Running the Evaluation Locally](#11-running-the-evaluation-locally)
-* [12. scores.txt Key Names](#12-scorestxt-key-names)
-* [13. Final Summary](#13-final-summary)
-* [14. Evaluation Flow Diagram ](#14-Evaluation-Flow-Diagram)
+* [5. Task 3.1 Evaluation Logic](#5-task-31-evaluation-logic)
+
+  * [Overview](#overview-3)
+  * [Prediction Truncation (350 words)](#prediction-truncation-350-words)
+  * [CS and CT (NLI Contradiction)](#cs-and-ct-nli-contradiction)
+  * [ROUGE-L Recall](#rouge-l-recall)
+  * [BERTScore Recall](#bertscore-recall)
+  * [Edge Cases](#edge-cases)
+  * [Codabench scores.txt Keys](#codabench-scorestxt-keys)
+  * [Task 3.1 Ranking](#task-31-ranking)
+  * [Task 3.1 Pipeline Summary](#task-31-pipeline-summary)
+* [6. Task 3.2 Evaluation Logic](#6-task-32-evaluation-logic)
+
+  * [Overview](#overview-4)
+  * [Criterion 1: Fit of Evidence Support](#criterion-1-fit-of-evidence-support)
+  * [Criterion 2: Recurrence](#criterion-2-recurrence)
+  * [Criterion 3: Specificity](#criterion-3-specificity)
+  * [Task 3.2 Final Ranking](#task-32-final-ranking)
+  * [Task 3.2 Data](#task-32-data)
+  * [Task 3.2 Submission Format](#task-32-submission-format)
+* [7. Evaluation Metrics Summary](#7-evaluation-metrics-summary)
+* [8. Post Filtering Rules](#8-post-filtering-rules)
+* [9. Environment](#9-environment)
+* [10. Subelement Schema](#10-subelement-schema)
+* [11. Submission Format](#11-submission-format)
+* [12. Submission Validation Script](#12-submission-validation-script)
+* [13. Running the Evaluation Locally](#13-running-the-evaluation-locally)
+* [14. scores.txt Key Names](#14-scorestxt-key-names)
+* [15. Final Summary](#15-final-summary)
+* [16. Evaluation Flow Diagram](#16-evaluation-flow-diagram)
+
+# Evaluation Pipeline
 
 ## What the flowchart shows
 
@@ -70,11 +96,20 @@ The shared task consists of:
 
   * Converts Switch/Escalation labels into binary form
   * Computes both **post-level** and **timeline-level** metrics
+* **Task 3.1** uses **sequence summaries**
+
+  * Truncates predictions to 350 words
+  * Computes contradiction, lexical recall, and semantic recall
+* **Task 3.2** uses **submitted signatures plus supporting sequences**
+
+  * Human judges evaluate evidence fit, recurrence, and specificity
 * Final ranking metrics are derived separately for:
 
   * **Task 1.1**
   * **Task 1.2**
   * **Task 2**
+  * **Task 3.1**
+  * **Task 3.2**
 
 # Concept Overview
 
@@ -91,6 +126,15 @@ The diagram also captures the conceptual relationship between the tasks:
   * Switch detection
   * Escalation detection
   * Evaluation both at post level and timeline level
+* **Task 3.1** focuses on:
+
+  * Summary quality over full sequences
+  * Contradiction minimization
+  * Lexical and semantic content coverage
+* **Task 3.2** focuses on:
+
+  * Recurring cross-sequence dynamic patterns
+  * Human evaluation of support, recurrence, and specificity
 
 # 1. Evaluation Overview
 
@@ -100,7 +144,7 @@ Each post may contain an adaptive and/or maladaptive self-state. Within each sel
 
 ```text
 A, B-O, B-S, C-O, C-S, D
-```
+````
 
 Each present element must receive exactly **one valid subelement** label.
 
@@ -126,6 +170,25 @@ A post may have:
 * only Switch
 * only Escalation
 * both
+
+## Task 3.1 — Sequence Summary Evaluation
+
+Each sequence receives a generated summary that is compared against a gold summary using four complementary metrics:
+
+* **CS** — contradiction score
+* **CT** — contradiction top score
+* **ROUGE-L Recall** — lexical temporal coverage
+* **BERTScore Recall** — semantic coverage
+
+## Task 3.2 — Identifying Recurrent Dynamic Signatures of Change Across Timelines
+
+Participants must propose **Signatures of Deterioration** and **Signatures of Improvement** across timelines, along with supporting sequence evidence.
+
+These signatures are evaluated by **human judges**, separately for deterioration and improvement, on:
+
+* **Fit of Evidence Support**
+* **Recurrence**
+* **Specificity**
 
 # 2. Task 1.1 Evaluation Logic
 
@@ -339,13 +402,13 @@ Metrics are computed separately for:
 
 Given 5 adaptive pairs:
 
-| Post | Gold | Pred | Error  | Error² |
-| ---- | ---- | ---- | ------- | ------ |
-| 1    | 3    | 3    | 0       | 0      |
-| 2    | 4    | 2    | 2       | 4      |
-| 3    | 1    | 1    | 0       | 0      |
-| 4    | 5    | 4    | 1       | 1      |
-| 5    | 2    | 3    | 1       | 1      |
+| Post | Gold | Pred | Error | Error² |
+| ---- | ---- | ---- | ----- | ------ |
+| 1    | 3    | 3    | 0     | 0      |
+| 2    | 4    | 2    | 2     | 4      |
+| 3    | 1    | 1    | 0     | 0      |
+| 4    | 5    | 4    | 1     | 1      |
+| 5    | 2    | 3    | 1     | 1      |
 
 * MAE = (0 + 2 + 0 + 1 + 1) / 5 = 0.800
 * RMSE = sqrt((0 + 4 + 0 + 1 + 1) / 5) = sqrt(1.2) = 1.095
@@ -548,7 +611,263 @@ All posts (no filtering)
   └─ Timeline-level: group by timeline_id → P/R/F1 per timeline → macro-average → macro F1
 ```
 
-# 5. Evaluation Metrics Summary
+# 5. Task 3.1 Evaluation Logic
+
+## Overview
+
+Task 3.1 evaluates **Sequence Summary** quality using four complementary metrics:
+
+| Metric                       | What it measures               | Direction       | Source              |
+| ---------------------------- | ------------------------------ | --------------- | ------------------- |
+| **CS** (Contradiction Score) | NLI contradiction (mean)       | Lower = better  | CLPsych 2025 Task B |
+| **CT** (Contradiction Top)   | NLI contradiction (max)        | Lower = better  | CLPsych 2025 Task B |
+| **ROUGE-L Recall**           | Temporal/dynamic word coverage | Higher = better | New                 |
+| **BERTScore Recall**         | Semantic content coverage      | Higher = better | CLPsych 2025 Task A |
+
+## Prediction Truncation (350 words)
+
+Before any scoring, predicted summaries are truncated to the first **350 words**. This:
+
+* prevents gaming recall metrics with verbose text
+* supports the use of Recall rather than Precision/F1 metrics
+* is enforced automatically in the evaluation code
+
+## CS and CT (NLI Contradiction)
+
+Unchanged from CLPsych 2025 Task B.
+
+* Model: `MoritzLaurer/DeBERTa-v3-large-mnli-fever-anli-ling-wanli`
+* Direction: gold = premise, predicted = hypothesis
+
+### CS
+
+For each predicted sentence:
+
+1. compute contradiction probability against each gold sentence
+2. take the **mean** contradiction probability across gold sentences
+
+Then average over all predicted sentences.
+
+### CT
+
+For each predicted sentence:
+
+1. compute contradiction probability against each gold sentence
+2. take the **max** contradiction probability across gold sentences
+
+Then average over all predicted sentences.
+
+## ROUGE-L Recall
+
+Computes longest common subsequence recall between the full gold summary and the truncated predicted summary at the word level.
+
+```text
+ROUGE-L Recall = LCS(gold, pred) / len(gold_words)
+```
+
+This captures how well the predicted summary covers the temporal progression and dynamic keywords present in the gold summary.
+
+ABCD terminology such as:
+
+* `self-criticism`
+* `hopelessness`
+* `relating behavior`
+
+is captured naturally when those word sequences appear in both summaries.
+
+## BERTScore Recall
+
+Adapted from CLPsych 2025 Task A evidence extraction (`span_scorer.py`).
+
+* Model: `microsoft/deberta-xlarge-mnli`
+* Baseline rescaling: enabled
+
+For each gold sentence `g_i`, compute BERTScore F1 against all predicted sentences and take the maximum:
+
+```text
+BERTScore_Recall(g_i) = max_j BERTScore_F1(g_i, s_j)
+```
+
+Then average over all gold sentences:
+
+```text
+BERTScore_Recall = (1/m) * sum_i BERTScore_Recall(g_i)
+```
+
+This measures whether the semantic content of each gold sentence is covered somewhere in the predicted summary, including paraphrases and semantically equivalent phrasing.
+
+## Edge Cases
+
+| Condition              | CS/CT           | ROUGE-L         | BERTScore       |
+| ---------------------- | --------------- | --------------- | --------------- |
+| Empty prediction       | 1.0 / 1.0       | 0.0             | 0.0             |
+| Empty gold             | 0.0 / 0.0       | 0.0             | 0.0             |
+| Prediction > 350 words | Truncated first | Truncated first | Truncated first |
+
+## Codabench scores.txt Keys
+
+| Key                   | Description           | Direction       |
+| --------------------- | --------------------- | --------------- |
+| `t3_cs`               | Mean CS               | Lower = better  |
+| `t3_ct`               | Mean CT               | Lower = better  |
+| `t3_rouge_l_recall`   | Mean ROUGE-L Recall   | Higher = better |
+| `t3_bertscore_recall` | Mean BERTScore Recall | Higher = better |
+| `t3_n_seq`            | Number of sequences   | —               |
+| `t3_n_trunc`          | Predictions truncated | —               |
+| `t3_rank`             | = t3_cs               | Lower = better  |
+
+## Task 3.1 Ranking
+
+```text
+Task 3.1 Ranking = t3_cs
+```
+
+Lower is better.
+
+## Task 3.1 Pipeline Summary
+
+```text
+Predicted summary
+  |-- Truncate to 350 words
+  |-- Sentence tokenize (NLTK)
+  |
+  |-- CS/CT: NLI contradiction (DeBERTa-v3-large)
+  |-- ROUGE-L Recall: LCS(gold, pred) / len(gold)
+  +-- BERTScore Recall: per-gold-sentence max BERTScore F1 (DeBERTa-xlarge)
+```
+
+## Models
+
+| Metric    | Model                                                      | Size    |
+| --------- | ---------------------------------------------------------- | ------- |
+| CS, CT    | `MoritzLaurer/DeBERTa-v3-large-mnli-fever-anli-ling-wanli` | ~1.7 GB |
+| BERTScore | `microsoft/deberta-xlarge-mnli`                            | ~1.4 GB |
+
+# 6. Task 3.2 Evaluation Logic
+
+## Overview
+
+Task 3.2 evaluates **Signatures of Deterioration** and **Signatures of Improvement** across timelines.
+
+These outputs are evaluated by **human judges**, separately for deterioration and improvement, based on three criteria:
+
+1. **Fit of Evidence Support**
+2. **Recurrence**
+3. **Specificity**
+
+## Criterion 1: Fit of Evidence Support
+
+### Definition
+
+Fit of evidence support evaluates how well the proposed signature is supported by the sequences submitted as evidence.
+
+A strong signature is one whose supporting sequences clearly express the same proposed dynamic.
+
+This criterion includes both:
+
+* **correctness**
+* **coherence of evidence support**
+
+Incoherence refers to cases where the submitted supporting sequences reflect phenomena that should be treated as separate signatures rather than one coherent dynamic.
+
+### Evaluation
+
+For each submitted signature, evaluators inspect the supporting sequences provided by the team and assess how many of them support the proposed signature.
+
+The key question is whether the same signature is genuinely present across the supporting evidence and accurately represented by them.
+
+A higher proportion of supporting sequences judged to fit the signature accurately results in a higher **Fit of Evidence Support** score.
+
+## Criterion 2: Recurrence
+
+### Definition
+
+Recurrence evaluates how recurrent the proposed signature is across sequences.
+
+A minimum of **2 occurrences** is required for a signature to be considered recurrent.
+
+It is derived from the evidence support assessment and reflects the number of supporting sequences that are judged to genuinely express the proposed dynamic.
+
+### Evaluation
+
+After excluding supporting sequences that do not fit the signature under **Fit of Evidence Support**, recurrence is calculated as the number of remaining valid supporting sequences.
+
+A higher recurrence score reflects a pattern that is supported by a larger number of sequences.
+
+## Criterion 3: Specificity
+
+### Definition
+
+Specificity evaluates how specific and non-generic the proposed signature is.
+
+A strong signature should capture a sufficiently fine-grained and informative dynamic pattern, rather than a broad description that could apply to many different cases.
+
+Specificity may also be reflected in the precision and significance of the wording used in the summary.
+
+In general, signatures that capture both:
+
+* **within-self-state dynamics**
+* **between-self-state dynamics**
+
+will be considered more specific than signatures describing only one of these levels, provided that both are clearly supported by the evidence.
+
+### Evaluation
+
+Specificity is evaluated based on how specific, fine-grained, and informative the proposed signature is.
+
+Lower scores are assigned to signatures that remain overly broad or generic.
+
+Additionally, signatures that capture both the dynamics between self-states and within self-states are considered more specific and receive higher scores.
+
+Specificity is assessed independently of recurrence, so a signature supported by few sequences can still receive a high specificity score if its wording is precise and its dynamic is well-defined.
+
+## Task 3.2 Final Ranking
+
+Each signature receives a **Best-Worst Scaling (BWS)-derived score** for each criterion based on comparative human judgments.
+
+The final score is computed as:
+
+```text
+Ranking = 0.5 * Fit + 0.5 * HarmonicMean(Recurrence, Specificity)
+```
+
+This formulation ensures that signatures are evaluated both by:
+
+* how well they are supported by the submitted evidence
+* how recurrent and specific they are across sequences
+
+## Task 3.2 Data
+
+### Important
+
+There is **no separate training or test dataset** for Task 3.2.
+
+Participants should use the **training data provided for Task 3.1**, including the provided sequence summaries.
+
+They may also use the training data from:
+
+* **Task 1**
+* **Task 2**
+
+as inputs for Task 3.2.
+
+Using this data, participants are required to extract:
+
+* **Signatures of Deterioration**
+* **Signatures of Improvement**
+
+The test data used in Tasks 1, 2, and 3.1 will **not** be used for Task 3.2.
+
+## Task 3.2 Submission Format
+
+Task 3.2 outputs must be submitted **via email** in the specified JSON format for human evaluation.
+
+Send submissions to both:
+
+* `iqra.ali@qmul.ac.uk`
+* `t.tseriotou@qmul.ac.uk`
+
+# 7. Evaluation Metrics Summary
 
 ## Task 1.1 — Element Presence
 
@@ -618,7 +937,38 @@ Reported for both post-level and timeline-level evaluation:
 Ranking = mean(Post-level Macro F1, Timeline-level Macro F1)
 ```
 
-# 6. Post Filtering Rules
+## Task 3.1 — Sequence Summary Evaluation
+
+Reported:
+
+* **CS**
+* **CT**
+* **ROUGE-L Recall**
+* **BERTScore Recall**
+* number of sequences
+* number of truncated predictions
+
+```text
+Ranking = t3_cs
+```
+
+Lower is better.
+
+## Task 3.2 — Dynamic Signature Evaluation
+
+Human-evaluated criteria:
+
+* **Fit of Evidence Support**
+* **Recurrence**
+* **Specificity**
+
+```text
+Ranking = 0.5 * Fit + 0.5 * HarmonicMean(Recurrence, Specificity)
+```
+
+Higher is better.
+
+# 8. Post Filtering Rules
 
 ## Task 1
 
@@ -639,7 +989,19 @@ All posts are evaluated.
 
 Switch and Escalation labels are always present.
 
-# 7. Environment
+## Task 3.1
+
+All evaluated sequence summaries are scored.
+
+Predictions are truncated to the first **350 words** before scoring.
+
+## Task 3.2
+
+No held-out evaluation dataset is used.
+
+Participants derive signatures from the available training resources and submit them for human evaluation.
+
+# 9. Environment
 
 | Component    | Value                         |
 | ------------ | ----------------------------- |
@@ -651,36 +1013,35 @@ Switch and Escalation labels are always present.
 
 All dependencies are pre-installed. No additional `pip install` is required.
 
-# 8. Subelement Schema
+# 10. Subelement Schema
 
 ## Adaptive State
 
-| Element | # | Subelements                                                                                                                                                                                                  |
-| ------- | - | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Element | # | Subelements                                                                                                                                                                                                |
+| ------- | - | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | A       | 7 | 1= Calm/ laid back, 3= Sad, Emotional pain, grieving, 5= Content, happy, joy, hopeful, 7= Vigor / energetic, 9= Justifiable anger/ assertive anger, justifiable outrage, 11= Proud, 13= Feel loved, belong |
-| B-O     | 2 | 1= Relating behavior, 3= Autonomous or adaptive control behavior     |
-| B-S     | 1 | 1= Self care and improvement    |
-| C-O     | 2 | 1= Perception of the other as related, 3= Perception of the other as facilitating autonomy needs  |
-| C-S     | 1 | 1= Self-acceptance and compassion  |
-| D       | 3 | 1= Relatedness, 3= Autonomy and adaptive control, 5= Competence, self esteem, self-care  |
+| B-O     | 2 | 1= Relating behavior, 3= Autonomous or adaptive control behavior                                                                                                                                           |
+| B-S     | 1 | 1= Self care and improvement                                                                                                                                                                               |
+| C-O     | 2 | 1= Perception of the other as related, 3= Perception of the other as facilitating autonomy needs                                                                                                           |
+| C-S     | 1 | 1= Self-acceptance and compassion                                                                                                                                                                          |
+| D       | 3 | 1= Relatedness, 3= Autonomy and adaptive control, 5= Competence, self esteem, self-care                                                                                                                    |
 
 ## Maladaptive State
 
-| Element | # | Subelements                                                                                                                                                                               |
-| ------- | - | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Element | # | Subelements                                                                                                                                                                            |
+| ------- | - | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | A       | 7 | 2= Anxious/ fearful/ tense, 4= Depressed, despair, hopeless, 6= Mania, 8= Apathic, don’t care, blunted, 10= Angry (aggression), disgust, contempt, 12= Ashamed, guilty, 14=Feel lonely |
-| B-O     | 2 | 2= Fight or flight behavior, 4= Over controlled or controlling behavior   |
-| B-S     | 1 | 2= Self harm, neglect and avoidance  |
-| C-O     | 2 | 2= Perception of the other as detached or over attached, 4= Perception of the other as blocking autonomy needs    |
-| C-S     | 1 | 2= Self criticism |
-| D       | 3 | 2= Expectation that relatedness needs will not be met, 4= Expectation that autonomy needs will not be met, 6= Expectation that competence needs will not be met  |
+| B-O     | 2 | 2= Fight or flight behavior, 4= Over controlled or controlling behavior                                                                                                                |
+| B-S     | 1 | 2= Self harm, neglect and avoidance                                                                                                                                                    |
+| C-O     | 2 | 2= Perception of the other as detached or over attached, 4= Perception of the other as blocking autonomy needs                                                                         |
+| C-S     | 1 | 2= Self criticism                                                                                                                                                                      |
+| D       | 3 | 2= Expectation that relatedness needs will not be met, 4= Expectation that autonomy needs will not be met, 6= Expectation that competence needs will not be met                        |
 
+# 11. Submission Format
 
-# 9. Submission Format
+Participants submit **separate ZIP files** for Task 1, Task 2, and Task 3.1 on their respective Codabench pages.
 
-Participants submit **separate ZIP files** for Task 1 and Task 2 on their respective Codabench pages.
-
-
+Task 3.2 is submitted separately by email.
 
 ## Required archive structure
 
@@ -698,7 +1059,12 @@ predictions.zip
 |- task2_pred.json
 ```
 
+### Task 3.1 submission
 
+```text
+predictions.zip
+|- task3_pred.json
+```
 
 ## Important — Privacy
 
@@ -710,14 +1076,10 @@ Do **not** include post text fields such as:
 
 These must be removed before submission.
 
-
-
 ## Note
 
-Participants may submit predictions for one or both tasks.
-If a prediction file for a task is not provided, that task will be skipped and only the other task will be scored.
-
-
+Participants may submit predictions for one or more tasks.
+If a prediction file for a task is not provided, that task will be skipped and only the provided tasks will be scored.
 
 ## Task 1 Submission (`task1_pred.json`)
 
@@ -739,50 +1101,13 @@ A JSON array. Each entry corresponds to one post with predicted self-states.
       "Presence": 2,
       "C-S": { "subelement": 2 }
     }
-  },
-  {
-    "timeline_id": "306d938d4b",
-    "post_id": "308b0c2c6c",
-    "adaptive-state": {
-      "Presence": 2,
-      "B-S": { "subelement": 1 },
-      "B-O": { "subelement": 1 }
-    },
-    "maladaptive-state": {
-      "Presence": 2,
-      "A": { "subelement": 2 }
-    }
   }
 ]
 ```
 
-
-### Field constraints
-
-| Field                          | Type          | Required                   | Description                                      |
-| ------------------------------ | ------------- | -------------------------- | ------------------------------------------------ |
-| `timeline_id`                  | string        | Yes                        | Must match a timeline in the test data           |
-| `post_id`                      | string        | Yes                        | Must match a post in the test data               |
-| `adaptive-state`               | object        | No                         | Omit entirely if no adaptive state predicted     |
-| `maladaptive-state`            | object        | No                         | Omit entirely if no maladaptive state predicted  |
-| `{state}.Presence`             | integer (1–5) | Yes, if state is present   | Psychological centrality rating                  |
-| `{state}.{element}`            | object        | No                         | Omitted elements will be scored as not present   |
-| `{state}.{element}.subelement` | integer       | Yes, if element is present | Must be a valid index for this element × valence |
-
-
-### Additional rules
-
-* **Elements**: `A`, `B-O`, `B-S`, `C-O`, `C-S`, `D`
-* Exactly **one subelement per element per valence**
-* Include **only elements predicted as present**
-* Only include entries for posts that have annotated evidence in the gold data
-  → Posts without gold evidence are **ignored during evaluation**
-
 ## Task 2 Submission (`task2_pred.json`)
 
 A JSON array. Each entry corresponds to one post with Switch and Escalation labels.
-
-All posts from all timelines must be included in a **single flat list**.
 
 ```json
 [
@@ -801,50 +1126,49 @@ All posts from all timelines must be included in a **single flat list**.
 ]
 ```
 
+## Task 3.1 Submission (`task3_pred.json`)
 
-### Field constraints
+A JSON array. Each entry corresponds to one sequence summary prediction.
 
-| Field         | Type   | Required | Description                                   |
-| ------------- | ------ | -------- | --------------------------------------------- |
-| `timeline_id` | string | Yes      | Must match a timeline in the test data        |
-| `post_id`     | string | Yes      | Must match a post in the test data            |
-| `Switch`      | string | Yes      | `"S"` for switch, `"0"` for no switch         |
-| `Escalation`  | string | Yes      | `"E"` for escalation, `"0"` for no escalation |
+```json
+[
+  {
+    "timeline_id": "3db8573df5",
+    "summary": "The sequence begins with..."
+  },
+  {
+    "timeline_id": "91b6a42835",
+    "summary": "Across the timeline..."
+  }
+]
+```
 
+### Additional Task 3.1 rules
 
-### Additional rules
+* one summary per evaluated sequence
+* summaries longer than 350 words are automatically truncated before scoring
+* empty predictions receive the edge-case scores described above
 
-* Must include **one entry for every post in the test data**
-* All timelines must be merged into a **single JSON array**
-* No grouping or nesting by timeline
-* Switch and Escalation are **independent labels**
+## Task 3.2 Submission
 
-  * A post may be:
+Task 3.2 must be submitted by email in the specified JSON format to:
 
-    * neither
-    * Switch only
-    * Escalation only
-    * both `"S"` and `"E"`
+* `iqra.ali@qmul.ac.uk`
+* `t.tseriotou@qmul.ac.uk`
 
-
-
-# 10. Submission Validation Script
+# 12. Submission Validation Script
 
 A local validation script `validate_submission.py` is provided.
 
 It requires only Python 3.
 
-
-
 ## What it checks
 
-It checks both **file format and submission completeness**:
+It checks both **file format and submission completeness**.
 
 ### Privacy
 
 * warns if post text fields are present
-
-
 
 ### Task 1 checks
 
@@ -855,8 +1179,6 @@ It checks both **file format and submission completeness**:
 * valid subelement ranges
 * no duplicate entries
 
-
-
 ### Task 2 checks
 
 * required fields
@@ -864,27 +1186,22 @@ It checks both **file format and submission completeness**:
 * valid Escalation values
 * no duplicate entries
 
+### Task 3.1 checks
 
+* required fields
+* one summary per sequence
+* no duplicate entries
+* summary field present and string-typed
 
 ### Coverage checks (optional with `--test-dir`)
 
 * every test post covered
 * no extra posts included
-* Task 2 contains **one entry for every post**
+* Task 2 contains one entry for every post
 * Task 1 may omit posts without gold evidence
+* Task 3.1 may be checked against expected sequence IDs
 
-
-## Usage
-
-```bash
-# Format checks only
-python validate_submission.py --task1 task1_pred.json --task2 task2_pred.json
-
-# Format + coverage checks
-python validate_submission.py --task1 task1_pred.json --task2 task2_pred.json --test-dir <test_data_dir>
-```
-
-# 11. Running the Evaluation Locally (Updated)
+# 13. Running the Evaluation Locally
 
 ## Task 1 only
 
@@ -898,12 +1215,19 @@ python evaluate_task1.py --gold-dir <gold_dir> --pred-file task1_pred.json
 python evaluate_task2.py --gold-dir <gold_dir> --pred-file task2_pred.json
 ```
 
+## Task 3.1 only
+
+```bash
+python evaluate_task3.py --gold-dir <gold_dir> --pred-file task3_pred.json
+```
+
 ## Both tasks — Codabench style output
 
 ```bash
 python run_evaluation.py --gold-dir <gold_dir> \
     --task1-pred task1_pred.json \
     --task2-pred task2_pred.json \
+    --task3-pred task3_pred.json \
     --output scores.txt
 ```
 
@@ -913,6 +1237,7 @@ python run_evaluation.py --gold-dir <gold_dir> \
 python run_evaluation.py --gold-dir <gold_dir> \
     --task1-pred task1_pred.json \
     --task2-pred task2_pred.json \
+    --task3-pred task3_pred.json \
     --output scores.txt --json-output results.json
 ```
 
@@ -930,8 +1255,9 @@ predictions.zip
 
   * `task1_pred.json` for Task 1
   * `task2_pred.json` for Task 2
+  * `task3_pred.json` for Task 3.1
 
-# 12. scores.txt Key Names
+# 14. scores.txt Key Names
 
 All metric keys are kept at **36 characters or fewer** for Codabench compatibility.
 
@@ -951,6 +1277,7 @@ key: value
 | `t2pl`    | Task 2 Post-Level                  |
 | `t2tl`    | Task 2 Timeline-Level              |
 | `t2_comb` | Task 2 Combined ranking fields     |
+| `t3`      | Task 3.1 Sequence Summary          |
 
 ## Common abbreviations
 
@@ -977,10 +1304,11 @@ key: value
 | `t1_1_rank` | `t1sc_avg_maF1`                         | Task 1.1 ranking |
 | `t1_2_rank` | (`t1pr_ada_rmse` + `t1pr_mal_rmse`) / 2 | Task 1.2 ranking |
 | `t2_rank`   | (`t2pl_maF1` + `t2tl_maF1`) / 2         | Task 2 ranking   |
+| `t3_rank`   | `t3_cs`                                 | Task 3.1 ranking |
 
 See `SCORES_KEY.md` for the complete metric key reference.
 
-# 13. Final Summary
+# 15. Final Summary
 
 ```text
 Task 1.1 → classification:
@@ -994,11 +1322,21 @@ Task 2   → binary detection:
             - Switch
             - Escalation
             - post-level and timeline-level scoring
+
+Task 3.1 → sequence summary evaluation:
+            - contradiction
+            - lexical recall
+            - semantic recall
+
+Task 3.2 → human-evaluated signature discovery:
+            - fit of evidence support
+            - recurrence
+            - specificity
 ```
 
 Each task has its own ranking metric.
 
-# 14. Evaluation Flow Diagram
+# 16. Evaluation Flow Diagram
 
 ```mermaid
 flowchart TD
@@ -1046,3 +1384,24 @@ flowchart TD
 
     PL3 --> T2R["Task 2 rank = mean of post-level Macro F1 and timeline-level Macro F1"]
     TL4 --> T2R
+
+    %% Task 3.1
+    A --> T31["Task 3.1: Sequence summaries"]
+    T31 --> T31T["Truncate predictions to first 350 words"]
+    T31T --> T31S["Sentence tokenize"]
+    T31S --> T31NLI["CS / CT contradiction scoring"]
+    T31S --> T31R["ROUGE-L Recall"]
+    T31S --> T31B["BERTScore Recall"]
+    T31NLI --> T31Rank["Task 3.1 rank = t3_cs"]
+    T31R --> T31Rank
+    T31B --> T31Rank
+
+    %% Task 3.2
+    A --> T32["Task 3.2: Signature discovery from training resources"]
+    T32 --> T32Sig["Submit deterioration and improvement signatures with evidence"]
+    T32Sig --> T32Fit["Human evaluation: Fit of Evidence Support"]
+    T32Sig --> T32Rec["Human evaluation: Recurrence"]
+    T32Sig --> T32Spec["Human evaluation: Specificity"]
+    T32Fit --> T32Rank["Task 3.2 rank = 0.5 * Fit + 0.5 * HM(Recurrence, Specificity)"]
+    T32Rec --> T32Rank
+    T32Spec --> T32Rank
