@@ -1152,12 +1152,14 @@ A JSON array. Each entry corresponds to one sequence summary prediction.
 ```json
 [
   {
-    "timeline_id": "3db8573df5",
-    "summary": "The sequence begins with..."
+    "timeline_id": "0cac13e357",
+    "sequence_id": "S_sequence2",
+    "summary": ""
   },
   {
-    "timeline_id": "91b6a42835",
-    "summary": "Across the timeline..."
+    "timeline_id": "0cac13e357",
+    "sequence_id": "E_sequence1",
+    "summary": ""
   }
 ]
 ```
